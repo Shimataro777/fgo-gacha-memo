@@ -386,16 +386,20 @@
                             <div className="space-y-6">
                                 <form onSubmit={handleSaveRecord} className="bg-white p-6 rounded-2xl shadow-sm border border-blue-100 space-y-5">
                                     <h2 className="text-lg font-bold text-slate-800 border-l-4 border-blue-500 pl-2">📝 記録</h2>
-                                    <div className="flex flex-col gap-4">
+                                    
+                                    {/* 修正箇所：日付とPU鯖を横並びに配置 */}
+                                    <div className="flex gap-4">
                                         <div>
+                                            <label className="block text-xs font-bold text-slate-600 mb-1">日付</label>
+                                            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-28 sm:w-32 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus:outline-none" />
+                                        </div>
+                                        <div className="flex-1">
                                             <label className="block text-xs font-bold text-slate-600 mb-1">PU鯖 *</label>
                                             <input type="text" value={puSaba} onChange={(e) => setPuSaba(e.target.value)} required className="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus:outline-none" />
                                         </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-600 mb-1">日付</label>
-                                            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-48 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus:outline-none" />
-                                        </div>
                                     </div>
+                                    {/* 修正箇所ここまで */}
+
                                     <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
                                         <label className="block text-xs font-bold text-slate-700 mb-2">計算用</label>
                                         <div className="flex flex-col gap-3">
@@ -532,10 +536,10 @@
                                             </div>
                                         )}
                                         {simPhase === 'result' && (
-                                            <div className="flex flex-wrap gap-2 justify-center animate-fade-in-group">
+                                            <div className="flex flex-wrap justify-center gap-2 w-full max-w-[280px] mx-auto animate-fade-in-group">
                                                 {simResults.map((item, i) => (
-                                                    <div key={i} className="bg-white border p-2 rounded-xl flex flex-col items-center shadow-sm w-16 animate-fade-in-item" style={{ animationDelay: `${0.1 + (i * 0.2)}s` }}>
-                                                        <div className="text-2xl">{item.emoji}</div>
+                                                    <div key={i} className="w-[calc(25%-8px)] bg-white border p-1.5 rounded-lg flex flex-col items-center shadow-sm animate-fade-in-item" style={{ animationDelay: `${0.05 + (i * 0.05)}s` }}>
+                                                        <div className="text-xl">{item.emoji}</div>
                                                     </div>
                                                 ))}
                                             </div>
