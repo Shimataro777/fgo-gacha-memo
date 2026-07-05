@@ -59,6 +59,7 @@
         const ITEM_C = { id: 'c', emoji: '🐓', name: 'ヒヨコ' };
         const ITEM_D = { id: 'd', emoji: '🐣', name: '卵の殻付きのヒヨコ' };
         const ITEM_E = { id: 'e', emoji: '🌱', name: '双葉' };
+
         function App() {
             const [activeTab, setActiveTab] = useState('memory');
             const [records, setRecords] = useState(() => {
@@ -68,21 +69,24 @@
             const [editingId, setEditingId] = useState(null);
             const [puSaba, setPuSaba] = useState('');
             const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-            const [countA, setCountA] = useState(''); 
-            const [countB, setCountB] = useState(''); 
+            const [countA, setCountA] = useState('');
+            const [countB, setCountB] = useState('');
             const [tenjo, setTenjo] = useState('');
             const [shoukanList, setShoukanList] = useState([{ name: '', count: '', type: '星5PU' }]);
             const [bikou, setBikou] = useState('');
             const [searchTerm, setSearchTerm] = useState('');
             const [onlyTenjo, setOnlyTenjo] = useState(false);
+
             const totalCount = useMemo(() => {
                 const numA = countA === '' ? 0 : parseInt(countA);
                 const numB = countB === '' ? 0 : parseInt(countB);
                 return numA + (11 * numB);
             }, [countA, countB]);
+
             useEffect(() => {
                 localStorage.setItem('gacha_records', JSON.stringify(records));
             }, [records]);
+
             const handleExport = async () => {
                 const dataStr = JSON.stringify(records, null, 2);
                 const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -110,6 +114,7 @@
                     URL.revokeObjectURL(url);
                 }
             };
+
             const handleImport = (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -126,24 +131,26 @@
                     }
                 };
                 reader.readAsText(file);
-                e.target.value = ''; 
+                e.target.value = '';
             };
 
             const filteredRecords = useMemo(() => {
                 return [...records]
                     .filter(r => {
                         const matchesSearch = r.puSaba.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                       r.shoukanList.some(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
+                                              r.shoukanList.some(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
                         const matchesTenjo = onlyTenjo ? (r.tenjo && r.tenjo > 0) : true;
                         return matchesSearch && matchesTenjo;
                     })
-                .sort((a, b) => new Date(b.date) - new Date(a.date));
+                    .sort((a, b) => new Date(b.date) - new Date(a.date));
             }, [records, searchTerm, onlyTenjo]);
+
             const availableYears = useMemo(() => {
                 const years = new Set(records.map(r => r.date.substring(0, 4)));
                 years.add(new Date().getFullYear().toString());
                 return Array.from(years).sort((a, b) => b - a);
             }, [records]);
+
             const updateShoukanSaba = (index, field, value) => {
                 const newList = [...shoukanList];
                 newList[index][field] = value;
@@ -169,6 +176,7 @@
                 setPuSaba(''); setDate(new Date().toISOString().split('T')[0]);
                 setCountA(''); setCountB(''); setTenjo(''); setShoukanList([{ name: '', count: '', type: '星5PU' }]); setBikou('');
             };
+
             const handleEditClick = (rec) => {
                 setEditingId(rec.id);
                 setPuSaba(rec.puSaba); setDate(rec.date); setCountA(rec.totalCount % 11); setCountB(Math.floor(rec.totalCount / 11)); setTenjo(rec.tenjo || '');
@@ -182,9 +190,9 @@
                     if (editingId === id) setEditingId(null);
                 }
             };
+
             const handleCopyToClipboard = () => {
-                if (records.length === 0) { alert('コピーするログがありません。');
-                return; }
+                if (records.length === 0) { alert('コピーするログがありません。'); return; }
                 const sortedAll = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
                 const text = sortedAll.map(r => {
                     return `◼️${r.date}\n・PU：${r.puSaba}\n・合計：${r.totalCount}連\n・天井：${r.tenjo || 0}回\n＜結果＞\n${r.shoukanList.map(s => `・${s.name} ${s.count}`).join('\n')}`
@@ -235,9 +243,9 @@
             const [simFiveStarSurinukeCount, setSimFiveStarSurinukeCount] = useState(0);
             const [simFourStarPuCount, setSimFourStarPuCount] = useState(0);
             const [simFourStarSurinukeCount, setSimFourStarSurinukeCount] = useState(0);
-            const [currentStep, setCurrentStep] = useState(0); 
+            const [currentStep, setCurrentStep] = useState(0);
             const [simResults, setSimResults] = useState([]);
-            const [displayState, setDisplayState] = useState('gift'); 
+            const [displayState, setDisplayState] = useState('gift');
             const [giftEmoji, setGiftEmoji] = useState('🍄‍🟫');
             const [isWobbling, setIsWobbling] = useState(false);
             const [isRainbowEffect, setIsRainbowEffect] = useState(false);
@@ -256,17 +264,14 @@
                 let draws = [];
                 for (let i = 0; i < 11; i++) {
                     const r = Math.random() * 100;
-                    const randShow = Math.random(); 
+                    const randShow = Math.random();
                     let item = ITEM_E;
                     let pattern = 1;
-                    if (r < 0.8) { item = ITEM_A;
-                        if (randShow < 0.3) pattern = 4; else if (randShow < 0.65) pattern = 3; else pattern = 2;
-                    } else if (r < 1.0) { item = ITEM_B; if (randShow < 0.3) pattern = 4;
-                        else if (randShow < 0.65) pattern = 3; else pattern = 2;
-                    } else if (r < 3.1) { item = ITEM_C; pattern = randShow < 0.5 ? 2 : 3;
-                    } else if (r < 4.0) { item = ITEM_D; pattern = randShow < 0.5 ? 2 : 3;
-                    } else { item = ITEM_E;
-                        pattern = 1; }
+                    if (r < 0.8) { item = ITEM_A; if (randShow < 0.3) pattern = 4; else if (randShow < 0.65) pattern = 3; else pattern = 2; }
+                    else if (r < 1.0) { item = ITEM_B; if (randShow < 0.3) pattern = 4; else if (randShow < 0.65) pattern = 3; else pattern = 2; }
+                    else if (r < 3.1) { item = ITEM_C; pattern = randShow < 0.5 ? 2 : 3; }
+                    else if (r < 4.0) { item = ITEM_D; pattern = randShow < 0.5 ? 2 : 3; }
+                    else { item = ITEM_E; pattern = 1; }
                     draws.push({ config: { pattern }, item });
                 }
 
@@ -280,8 +285,7 @@
                 };
                 for (let stepIndex = 0; stepIndex < 11; stepIndex++) {
                     if (skipRef.current) {
-                        setIsRainbowEffect(false);
-                        setIsWobbling(false);
+                        setIsRainbowEffect(false); setIsWobbling(false);
                         const nextImportantIndex = draws.findIndex((d, idx) => idx >= stepIndex && [2, 3, 4].includes(d.config.pattern));
                         if (nextImportantIndex === -1) {
                             const remainingItems = draws.slice(stepIndex).map(d => d.item);
@@ -291,7 +295,7 @@
                             const itemsToAdd = draws.slice(stepIndex, nextImportantIndex).map(d => d.item);
                             setSimResults(prev => [...prev, ...itemsToAdd]);
                             stepIndex = nextImportantIndex - 1;
-                            skipRef.current = false; 
+                            skipRef.current = false;
                             continue;
                         }
                     }
@@ -301,53 +305,43 @@
 
                     if (config.pattern === 1) {
                         setGiftEmoji('🍄‍🟫');
-                        await wait(300); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
-                        }
+                        await wait(300); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
                         setIsWobbling(true);
                         await wait(800);
                     } else if (config.pattern === 2) {
                         setGiftEmoji('🍄‍🟫');
-                        await wait(300); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
-                        }
+                        await wait(300); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
                         setIsWobbling(true);
-                        await wait(800); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
-                        }
+                        await wait(800); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
                         setIsWobbling(false);
                         await wait(1000);
                     } else if (config.pattern === 3) {
                         setGiftEmoji('🍆');
-                        await wait(300); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
-                        }
+                        await wait(300); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
                         setIsWobbling(true);
-                        await wait(800); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
-                        }
+                        await wait(800); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
                         setIsWobbling(false);
                         await wait(1000);
                     } else if (config.pattern === 4) {
                         setGiftEmoji('🌑');
                         setIsRainbowEffect(true);
-                        await wait(1500); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
-                        }
+                        await wait(1500); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
                         setIsRainbowEffect(false);
                     }
 
-                    if(skipRef.current) { setIsRainbowEffect(false);
-                        setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
+                    if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
                     setIsWobbling(false);
-                    await wait(300); 
-                    if(skipRef.current) { setIsRainbowEffect(false); setSimResults(prev => [...prev, item]); continue;
-                    }
+                    await wait(300);
+                    if(skipRef.current) { setIsRainbowEffect(false); setSimResults(prev => [...prev, item]); continue; }
                     setDisplayState('item');
                     setCurrentItem(item); setSimResults(prev => [...prev, item]);
                     await wait(500);
                 }
-                setIsRainbowEffect(false);
-                setIsWobbling(false);
+                setIsRainbowEffect(false); setIsWobbling(false);
                 setSimPhase('result');
                 setSimTotalCount(prev => prev + 11);
                 
-                let fiveStarPu = 0; let fiveStarSurinuke = 0; let fourStarPu = 0;
-                let fourStarSurinuke = 0;
+                let fiveStarPu = 0; let fiveStarSurinuke = 0; let fourStarPu = 0; let fourStarSurinuke = 0;
                 draws.forEach(d => {
                     if (d.item.id === 'a') fiveStarPu++;
                     if (d.item.id === 'b') fiveStarSurinuke++;
@@ -386,8 +380,6 @@
                             <div className="space-y-6">
                                 <form onSubmit={handleSaveRecord} className="bg-white p-6 rounded-2xl shadow-sm border border-blue-100 space-y-5">
                                     <h2 className="text-lg font-bold text-slate-800 border-l-4 border-blue-500 pl-2">📝 記録</h2>
-                                    
-                                    {/* 修正箇所：日付とPU鯖を横並びに配置 */}
                                     <div className="flex gap-4">
                                         <div>
                                             <label className="block text-xs font-bold text-slate-600 mb-1">日付</label>
@@ -398,8 +390,6 @@
                                             <input type="text" value={puSaba} onChange={(e) => setPuSaba(e.target.value)} required className="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus:outline-none" />
                                         </div>
                                     </div>
-                                    {/* 修正箇所ここまで */}
-
                                     <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
                                         <label className="block text-xs font-bold text-slate-700 mb-2">計算用</label>
                                         <div className="flex flex-col gap-3">
@@ -437,7 +427,7 @@
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-slate-600 mb-1">備考</label>
-                                        <textarea value={bikou} onChange={(e) => setBikou(e.target.value)} rows="2" className="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50" />
+                                        <textarea value={bikou} onChange={(e) => setBikou(e.target.value)} rows="1" className="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50" />
                                     </div>
                                     <div className="flex gap-2 pt-2">
                                         <button type="submit" className="flex-1 bg-blue-500 text-white font-bold py-3 rounded-xl hover:bg-blue-600">{editingId ? '変更を保存' : '記録する'}</button>
@@ -518,11 +508,11 @@
                                     <input type="number" value={diamonds} onChange={(e) => setDiamonds(e.target.value)} placeholder="0" className="w-24 border border-slate-200 rounded-lg px-2 py-1 text-center font-bold text-slate-800 bg-white" />
                                     <span className="text-xs text-slate-500">個</span>
                                 </div>
-                                <div className="relative min-h-[240px] bg-gradient-to-b from-blue-50/20 to-indigo-50/40 rounded-2xl border flex flex-col items-center justify-between p-6">
-                                    <div className="h-8">
+                                <div className="relative min-h-[240px] bg-gradient-to-b from-blue-50/20 to-indigo-50/40 rounded-2xl border flex flex-col items-center justify-center p-4">
+                                    <div className="h-6">
                                         {simPhase === 'animating' && <span className="font-bold text-xs bg-blue-500 text-white px-3 py-1 rounded-full">進行中: {currentStep} / 11 回目</span>}
                                     </div>
-                                    <div className="flex-1 w-full flex flex-col items-center justify-center relative my-4">
+                                    <div className="w-full h-32 flex flex-col items-center justify-center relative my-2">
                                         {isRainbowEffect && <div className="absolute w-36 h-36 rounded-full bg-gradient-to-tr from-red-500 via-green-500 to-blue-500 opacity-40 blur-md animate-rainbow" />}
                                         {simPhase === 'animating' && (
                                             <div className="h-24 flex items-center justify-center z-10">
@@ -536,7 +526,7 @@
                                             </div>
                                         )}
                                         {simPhase === 'result' && (
-                                            <div className="flex flex-wrap justify-center gap-2 w-full max-w-[280px] mx-auto animate-fade-in-group">
+                                            <div className="flex flex-wrap justify-center items-center gap-2 w-full max-w-[280px] mx-auto animate-fade-in-group">
                                                 {simResults.map((item, i) => (
                                                     <div key={i} className="w-[calc(25%-8px)] bg-white border p-1.5 rounded-lg flex flex-col items-center shadow-sm animate-fade-in-item" style={{ animationDelay: `${0.05 + (i * 0.15)}s` }}>
                                                         <div className="text-xl">{item.emoji}</div>
