@@ -59,7 +59,6 @@
         const ITEM_C = { id: 'c', emoji: '🐓', name: 'ヒヨコ' };
         const ITEM_D = { id: 'd', emoji: '🐣', name: '卵の殻付きのヒヨコ' };
         const ITEM_E = { id: 'e', emoji: '🌱', name: '双葉' };
-
         function App() {
             const [activeTab, setActiveTab] = useState('memory');
             const [records, setRecords] = useState(() => {
@@ -76,17 +75,14 @@
             const [bikou, setBikou] = useState('');
             const [searchTerm, setSearchTerm] = useState('');
             const [onlyTenjo, setOnlyTenjo] = useState(false);
-
             const totalCount = useMemo(() => {
                 const numA = countA === '' ? 0 : parseInt(countA);
                 const numB = countB === '' ? 0 : parseInt(countB);
                 return numA + (11 * numB);
             }, [countA, countB]);
-
             useEffect(() => {
                 localStorage.setItem('gacha_records', JSON.stringify(records));
             }, [records]);
-
             const handleExport = async () => {
                 const dataStr = JSON.stringify(records, null, 2);
                 const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -114,7 +110,6 @@
                     URL.revokeObjectURL(url);
                 }
             };
-
             const handleImport = (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -138,19 +133,17 @@
                 return [...records]
                     .filter(r => {
                         const matchesSearch = r.puSaba.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                              r.shoukanList.some(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
+                                       r.shoukanList.some(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
                         const matchesTenjo = onlyTenjo ? (r.tenjo && r.tenjo > 0) : true;
                         return matchesSearch && matchesTenjo;
-                })
+                    })
                 .sort((a, b) => new Date(b.date) - new Date(a.date));
             }, [records, searchTerm, onlyTenjo]);
-
             const availableYears = useMemo(() => {
                 const years = new Set(records.map(r => r.date.substring(0, 4)));
                 years.add(new Date().getFullYear().toString());
                 return Array.from(years).sort((a, b) => b - a);
             }, [records]);
-
             const updateShoukanSaba = (index, field, value) => {
                 const newList = [...shoukanList];
                 newList[index][field] = value;
@@ -176,7 +169,6 @@
                 setPuSaba(''); setDate(new Date().toISOString().split('T')[0]);
                 setCountA(''); setCountB(''); setTenjo(''); setShoukanList([{ name: '', count: '', type: '星5PU' }]); setBikou('');
             };
-
             const handleEditClick = (rec) => {
                 setEditingId(rec.id);
                 setPuSaba(rec.puSaba); setDate(rec.date); setCountA(rec.totalCount % 11); setCountB(Math.floor(rec.totalCount / 11)); setTenjo(rec.tenjo || '');
@@ -190,9 +182,9 @@
                     if (editingId === id) setEditingId(null);
                 }
             };
-
             const handleCopyToClipboard = () => {
-                if (records.length === 0) { alert('コピーするログがありません。'); return; }
+                if (records.length === 0) { alert('コピーするログがありません。');
+                return; }
                 const sortedAll = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
                 const text = sortedAll.map(r => {
                     return `◼️${r.date}\n・PU：${r.puSaba}\n・合計：${r.totalCount}連\n・天井：${r.tenjo || 0}回\n＜結果＞\n${r.shoukanList.map(s => `・${s.name} ${s.count}`).join('\n')}`
@@ -267,11 +259,14 @@
                     const randShow = Math.random(); 
                     let item = ITEM_E;
                     let pattern = 1;
-                    if (r < 0.8) { item = ITEM_A; if (randShow < 0.3) pattern = 4; else if (randShow < 0.65) pattern = 3; else pattern = 2;
-                    } else if (r < 1.0) { item = ITEM_B; if (randShow < 0.3) pattern = 4; else if (randShow < 0.65) pattern = 3; else pattern = 2;
-                    } else if (r < 3.1) { item = ITEM_C; pattern = 2;
-                    } else if (r < 4.0) { item = ITEM_D; pattern = 2;
-                    } else { item = ITEM_E; pattern = 1; }
+                    if (r < 0.8) { item = ITEM_A;
+                        if (randShow < 0.3) pattern = 4; else if (randShow < 0.65) pattern = 3; else pattern = 2;
+                    } else if (r < 1.0) { item = ITEM_B; if (randShow < 0.3) pattern = 4;
+                        else if (randShow < 0.65) pattern = 3; else pattern = 2;
+                    } else if (r < 3.1) { item = ITEM_C; pattern = randShow < 0.5 ? 2 : 3;
+                    } else if (r < 4.0) { item = ITEM_D; pattern = randShow < 0.5 ? 2 : 3;
+                    } else { item = ITEM_E;
+                        pattern = 1; }
                     draws.push({ config: { pattern }, item });
                 }
 
@@ -283,10 +278,10 @@
                         elapsed += 50;
                     }
                 };
-
                 for (let stepIndex = 0; stepIndex < 11; stepIndex++) {
                     if (skipRef.current) {
-                        setIsRainbowEffect(false); setIsWobbling(false);
+                        setIsRainbowEffect(false);
+                        setIsWobbling(false);
                         const nextImportantIndex = draws.findIndex((d, idx) => idx >= stepIndex && [2, 3, 4].includes(d.config.pattern));
                         if (nextImportantIndex === -1) {
                             const remainingItems = draws.slice(stepIndex).map(d => d.item);
@@ -306,36 +301,53 @@
 
                     if (config.pattern === 1) {
                         setGiftEmoji('🍄‍🟫');
-                        await wait(300); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
-                        setIsWobbling(true); await wait(800);
+                        await wait(300); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
+                        }
+                        setIsWobbling(true);
+                        await wait(800);
                     } else if (config.pattern === 2) {
                         setGiftEmoji('🍄‍🟫');
-                        await wait(300); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
-                        setIsWobbling(true); await wait(800); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
-                        setIsWobbling(false); await wait(1000);
+                        await wait(300); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
+                        }
+                        setIsWobbling(true);
+                        await wait(800); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
+                        }
+                        setIsWobbling(false);
+                        await wait(1000);
                     } else if (config.pattern === 3) {
                         setGiftEmoji('🍆');
-                        await wait(300); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
-                        setIsWobbling(true); await wait(800); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
-                        setIsWobbling(false); await wait(1000);
+                        await wait(300); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
+                        }
+                        setIsWobbling(true);
+                        await wait(800); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
+                        }
+                        setIsWobbling(false);
+                        await wait(1000);
                     } else if (config.pattern === 4) {
                         setGiftEmoji('🌑');
                         setIsRainbowEffect(true);
-                        await wait(1500); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
+                        await wait(1500); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
+                        }
                         setIsRainbowEffect(false);
                     }
 
-                    if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
-                    setIsWobbling(false); await wait(300); 
-                    if(skipRef.current) { setIsRainbowEffect(false); setSimResults(prev => [...prev, item]); continue; }
-                    setDisplayState('item'); setCurrentItem(item); setSimResults(prev => [...prev, item]);
+                    if(skipRef.current) { setIsRainbowEffect(false);
+                        setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
+                    setIsWobbling(false);
+                    await wait(300); 
+                    if(skipRef.current) { setIsRainbowEffect(false); setSimResults(prev => [...prev, item]); continue;
+                    }
+                    setDisplayState('item');
+                    setCurrentItem(item); setSimResults(prev => [...prev, item]);
                     await wait(500);
                 }
-                setIsRainbowEffect(false); setIsWobbling(false);
+                setIsRainbowEffect(false);
+                setIsWobbling(false);
                 setSimPhase('result');
                 setSimTotalCount(prev => prev + 11);
                 
-                let fiveStarPu = 0; let fiveStarSurinuke = 0; let fourStarPu = 0; let fourStarSurinuke = 0;
+                let fiveStarPu = 0; let fiveStarSurinuke = 0; let fourStarPu = 0;
+                let fourStarSurinuke = 0;
                 draws.forEach(d => {
                     if (d.item.id === 'a') fiveStarPu++;
                     if (d.item.id === 'b') fiveStarSurinuke++;
@@ -446,8 +458,12 @@
                                             <div className="font-bold text-slate-800">{rec.puSaba} <span className="text-xs text-slate-400 ml-2">{rec.date}</span></div>
                                             <div className="text-xs text-slate-600 mt-2">合計: {rec.totalCount}連 {rec.tenjo && ` | 天井: ${rec.tenjo}回`}</div>
                                             {rec.shoukanList.length > 0 && (
-                                                <div className="mt-2 text-sm text-slate-700">
-                                                    {rec.shoukanList.map((s, i) => <span key={i} className="mr-3 text-xs border px-1.5 py-0.5 rounded">{s.type || '不明'} {s.name} ✕ {s.count}</span>)}
+                                                <div className="mt-2 text-sm text-slate-700 flex flex-wrap gap-2">
+                                                    {rec.shoukanList.map((s, i) => (
+                                                        <span key={i} className="text-xs border px-2 py-1 rounded inline-block">
+                                                            {s.type || '不明'} {s.name} ✕ {s.count}
+                                                        </span>
+                                                    ))}
                                                 </div>
                                             )}
                                             {rec.bikou && <div className="mt-2 text-xs text-slate-500 bg-slate-50 p-2 rounded">{rec.bikou}</div>}
