@@ -59,7 +59,6 @@
         const ITEM_C = { id: 'c', emoji: '🐓', name: 'ヒヨコ' };
         const ITEM_D = { id: 'd', emoji: '🐣', name: '卵の殻付きのヒヨコ' };
         const ITEM_E = { id: 'e', emoji: '🌱', name: '双葉' };
-
         function App() {
             const [activeTab, setActiveTab] = useState('memory');
             const [records, setRecords] = useState(() => {
@@ -72,21 +71,19 @@
             const [countA, setCountA] = useState('');
             const [countB, setCountB] = useState('');
             const [tenjo, setTenjo] = useState('');
+            const [isNoFourStarPU, setIsNoFourStarPU] = useState(false);
             const [shoukanList, setShoukanList] = useState([{ name: '', count: '', type: '星5PU' }]);
             const [bikou, setBikou] = useState('');
             const [searchTerm, setSearchTerm] = useState('');
             const [onlyTenjo, setOnlyTenjo] = useState(false);
-
             const totalCount = useMemo(() => {
                 const numA = countA === '' ? 0 : parseInt(countA);
                 const numB = countB === '' ? 0 : parseInt(countB);
                 return numA + (11 * numB);
             }, [countA, countB]);
-
             useEffect(() => {
                 localStorage.setItem('gacha_records', JSON.stringify(records));
             }, [records]);
-
             const handleExport = async () => {
                 const dataStr = JSON.stringify(records, null, 2);
                 const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -114,7 +111,6 @@
                     URL.revokeObjectURL(url);
                 }
             };
-
             const handleImport = (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -144,13 +140,11 @@
                     })
                     .sort((a, b) => new Date(b.date) - new Date(a.date));
             }, [records, searchTerm, onlyTenjo]);
-
             const availableYears = useMemo(() => {
                 const years = new Set(records.map(r => r.date.substring(0, 4)));
                 years.add(new Date().getFullYear().toString());
                 return Array.from(years).sort((a, b) => b - a);
             }, [records]);
-
             const updateShoukanSaba = (index, field, value) => {
                 const newList = [...shoukanList];
                 newList[index][field] = value;
@@ -165,22 +159,21 @@
                 }));
                 if (editingId) {
                     setRecords(records.map(rec => rec.id === editingId ? {
-                        ...rec, puSaba, date, totalCount, tenjo: tenjo ? parseInt(tenjo) : null, shoukanList: formattedList, bikou
+                        ...rec, puSaba, date, totalCount, tenjo: tenjo ? parseInt(tenjo) : null, isNoFourStarPU, shoukanList: formattedList, bikou
                     } : rec));
                     setEditingId(null);
                     alert('記録の修正を保存しました！');
                 } else {
-                    setRecords([{ id: Date.now(), puSaba, date, totalCount, tenjo: tenjo ? parseInt(tenjo) : null, shoukanList: formattedList, bikou }, ...records]);
+                    setRecords([{ id: Date.now(), puSaba, date, totalCount, tenjo: tenjo ? parseInt(tenjo) : null, isNoFourStarPU, shoukanList: formattedList, bikou }, ...records]);
                     alert('新しい記録を保存しました！');
                 }
                 setPuSaba(''); setDate(new Date().toISOString().split('T')[0]);
-                setCountA(''); setCountB(''); setTenjo(''); setShoukanList([{ name: '', count: '', type: '星5PU' }]); setBikou('');
+                setCountA(''); setCountB(''); setTenjo(''); setIsNoFourStarPU(false); setShoukanList([{ name: '', count: '', type: '星5PU' }]); setBikou('');
             };
-
             const handleEditClick = (rec) => {
                 setEditingId(rec.id);
                 setPuSaba(rec.puSaba); setDate(rec.date); setCountA(rec.totalCount % 11); setCountB(Math.floor(rec.totalCount / 11)); setTenjo(rec.tenjo || '');
-                setShoukanList(rec.shoukanList.length > 0 ? rec.shoukanList : [{ name: '', count: '', type: '星5PU' }]); setBikou(rec.bikou || '');
+                setIsNoFourStarPU(!!rec.isNoFourStarPU); setShoukanList(rec.shoukanList.length > 0 ? rec.shoukanList : [{ name: '', count: '', type: '星5PU' }]); setBikou(rec.bikou || '');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
 
@@ -190,12 +183,11 @@
                     if (editingId === id) setEditingId(null);
                 }
             };
-
             const handleCopyToClipboard = () => {
                 if (records.length === 0) { alert('コピーするログがありません。'); return; }
                 const sortedAll = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
                 const text = sortedAll.map(r => {
-                    return `◼️${r.date}\n・PU：${r.puSaba}\n・合計：${r.totalCount}連\n・天井：${r.tenjo || 0}回\n＜結果＞\n${r.shoukanList.map(s => `・${s.name} ${s.count}`).join('\n')}`
+                    return `◼️${r.date}\n・PU：${r.puSaba}\n・合計：${r.totalCount}連\n・天井：${r.tenjo || 0}回${r.isNoFourStarPU ? ' (星4PUなし)' : ''}\n＜結果＞\n${r.shoukanList.map(s => `・${s.name} ${s.count}`).join('\n')}`
                 }).join('\n\n');
                 navigator.clipboard.writeText(text).then(() => { alert('履歴をコピーしました！'); });
             };
@@ -205,8 +197,9 @@
                 let count = 0;
                 let pickups = 0;
                 let tenjo = 0;
+                let countForFourStarRate = 0;
                 const monthlyData = {};
-                const breakdown = { '星5PU': 0, '星5他': 0, '星4PU': 0 };
+                const breakdown = { '星5PU': 0, '星5他': 0, '星4PU': 0, '特殊': 0 };
 
                 records.forEach(r => {
                     const y = r.date.substring(0, 4);
@@ -218,6 +211,7 @@
                         count += r.totalCount;
                         pickups += pickupCount;
                         tenjo += tenjoCount;
+                        if (!r.isNoFourStarPU) countForFourStarRate += r.totalCount;
 
                         r.shoukanList.forEach(item => {
                             const type = item.type || '星5PU';
@@ -232,7 +226,7 @@
                         }
                     }
                 });
-                return { count, pickups, tenjo, monthlyData, breakdown };
+                return { count, pickups, tenjo, countForFourStarRate, monthlyData, breakdown };
             }, [records, statYear]);
 
             const skipRef = useRef(false);
@@ -267,11 +261,18 @@
                     const randShow = Math.random();
                     let item = ITEM_E;
                     let pattern = 1;
-                    if (r < 0.8) { item = ITEM_A; if (randShow < 0.3) pattern = 4; else if (randShow < 0.65) pattern = 3; else pattern = 2; }
-                    else if (r < 1.0) { item = ITEM_B; if (randShow < 0.3) pattern = 4; else if (randShow < 0.65) pattern = 3; else pattern = 2; }
-                    else if (r < 3.1) { item = ITEM_C; pattern = randShow < 0.5 ? 2 : 3; }
-                    else if (r < 4.0) { item = ITEM_D; pattern = randShow < 0.5 ? 2 : 3; }
-                    else { item = ITEM_E; pattern = 1; }
+                    if (r < 0.8) { item = ITEM_A;
+                        if (randShow < 0.3) pattern = 4; else if (randShow < 0.65) pattern = 3; else pattern = 2;
+                    }
+                    else if (r < 1.0) { item = ITEM_B;
+                        if (randShow < 0.3) pattern = 4; else if (randShow < 0.65) pattern = 3; else pattern = 2;
+                    }
+                    else if (r < 3.1) { item = ITEM_C;
+                        pattern = randShow < 0.5 ? 2 : 3; }
+                    else if (r < 4.0) { item = ITEM_D;
+                        pattern = randShow < 0.5 ? 2 : 3; }
+                    else { item = ITEM_E;
+                        pattern = 1; }
                     draws.push({ config: { pattern }, item });
                 }
 
@@ -341,7 +342,8 @@
                 setSimPhase('result');
                 setSimTotalCount(prev => prev + 11);
                 
-                let fiveStarPu = 0; let fiveStarSurinuke = 0; let fourStarPu = 0; let fourStarSurinuke = 0;
+                let fiveStarPu = 0; let fiveStarSurinuke = 0; let fourStarPu = 0;
+                let fourStarSurinuke = 0;
                 draws.forEach(d => {
                     if (d.item.id === 'a') fiveStarPu++;
                     if (d.item.id === 'b') fiveStarSurinuke++;
@@ -400,11 +402,17 @@
                                             <div className="text-sm font-bold pt-1 border-t border-blue-100/30">合計: <span className="text-xl text-blue-600">{totalCount}</span> 連</div>
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-600 mb-1">天井した回数</label>
-                                        <select value={tenjo} onChange={(e) => setTenjo(e.target.value)} className="w-20 border border-slate-200 rounded-lg px-2 py-1 bg-slate-50">
-                                            {[0, 1, 2, 3, 4, 5].map(num => (<option key={num} value={num}>{num}</option>))}
-                                        </select>
+                                    <div className="flex gap-4 items-center">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-600 mb-1">天井した回数</label>
+                                            <select value={tenjo} onChange={(e) => setTenjo(e.target.value)} className="w-20 border border-slate-200 rounded-lg px-2 py-1 bg-slate-50 text-sm">
+                                                {[0, 1, 2, 3, 4, 5].map(num => (<option key={num} value={num}>{num}</option>))}
+                                            </select>
+                                        </div>
+                                        <label className="flex items-center gap-1.5 cursor-pointer mt-5">
+                                            <input type="checkbox" checked={isNoFourStarPU} onChange={(e) => setIsNoFourStarPU(e.target.checked)} className="w-5 h-5 rounded border-slate-300" />
+                                            <span className="text-sm font-bold text-slate-600 whitespace-nowrap">星4PUなし</span>
+                                        </label>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="block text-xs font-bold text-slate-600">ガチャ結果</label>
@@ -415,6 +423,7 @@
                                                     <option value="星5他">星5他</option>
                                                     <option value="星4PU">星4PU</option>
                                                     <option value="その他">その他</option>
+                                                    <option value="特殊">特殊</option>
                                                 </select>
                                                 <input type="text" placeholder="召喚した鯖名" value={shoukan.name} onChange={(e) => updateShoukanSaba(index, 'name', e.target.value)} className="flex-1 min-w-[80px] border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-sm" />
                                                 <input type="number" value={shoukan.count} onChange={(e) => updateShoukanSaba(index, 'count', e.target.value)} placeholder="1" className="w-10 border border-slate-200 rounded-lg px-1 py-1.5 text-center bg-white text-sm shrink-0" />
@@ -450,7 +459,7 @@
                                                 <button onClick={() => handleDeleteRecord(rec.id)} className="px-3 py-1 text-xs font-bold bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100">削除</button>
                                             </div>
                                             <div className="font-bold text-slate-800">{rec.puSaba} <span className="text-xs text-slate-400 ml-2">{rec.date}</span></div>
-                                            <div className="text-xs text-slate-600 mt-2">合計: {rec.totalCount}連 {rec.tenjo && ` | 天井: ${rec.tenjo}回`}</div>
+                                            <div className="text-xs text-slate-600 mt-2">合計: {rec.totalCount}連 {rec.tenjo ? ` | 天井: ${rec.tenjo}回` : ''} {rec.isNoFourStarPU ? '(星4PUなし)' : ''}</div>
                                             {rec.shoukanList.length > 0 && (
                                                 <div className="mt-2 text-sm text-slate-700 flex flex-wrap gap-2">
                                                     {rec.shoukanList.map((s, i) => (
@@ -481,7 +490,8 @@
                                             <div className="flex flex-col sm:flex-row sm:justify-center items-center gap-2 sm:gap-6 text-sm">
                                                 <div className="font-bold text-emerald-600">星5PU: {stats.breakdown['星5PU']}騎({stats.count > 0 ? ((stats.breakdown['星5PU'] / stats.count) * 100).toFixed(2) : 0}%)</div>
                                                 <div className="text-slate-600 font-medium">星5他: {stats.breakdown['星5他']}騎({stats.count > 0 ? ((stats.breakdown['星5他'] / stats.count) * 100).toFixed(2) : 0}%)</div>
-                                                <div className="font-bold text-blue-600">星4PU: {stats.breakdown['星4PU']}騎({stats.count > 0 ? ((stats.breakdown['星4PU'] / stats.count) * 100).toFixed(2) : 0}%)</div>
+                                                <div className="font-bold text-blue-600">星4PU: {stats.breakdown['星4PU']}騎({stats.countForFourStarRate > 0 ? ((stats.breakdown['星4PU'] / stats.countForFourStarRate) * 100).toFixed(2) : 0}%)</div>
+                                                <div className="font-bold text-purple-600">特殊: {stats.breakdown['特殊']}騎</div>
                                             </div>
                                             <div className="text-sm font-bold text-slate-700 mt-4 pt-4 border-t text-center">天井: {stats.tenjo}回</div>
                                         </div>
