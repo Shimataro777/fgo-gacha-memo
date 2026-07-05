@@ -59,6 +59,7 @@
         const ITEM_C = { id: 'c', emoji: '🐓', name: 'ヒヨコ' };
         const ITEM_D = { id: 'd', emoji: '🐣', name: '卵の殻付きのヒヨコ' };
         const ITEM_E = { id: 'e', emoji: '🌱', name: '双葉' };
+
         function App() {
             const [activeTab, setActiveTab] = useState('memory');
             const [records, setRecords] = useState(() => {
@@ -76,14 +77,17 @@
             const [bikou, setBikou] = useState('');
             const [searchTerm, setSearchTerm] = useState('');
             const [onlyTenjo, setOnlyTenjo] = useState(false);
+
             const totalCount = useMemo(() => {
                 const numA = countA === '' ? 0 : parseInt(countA);
                 const numB = countB === '' ? 0 : parseInt(countB);
                 return numA + (11 * numB);
             }, [countA, countB]);
+
             useEffect(() => {
                 localStorage.setItem('gacha_records', JSON.stringify(records));
             }, [records]);
+
             const handleExport = async () => {
                 const dataStr = JSON.stringify(records, null, 2);
                 const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -111,6 +115,7 @@
                     URL.revokeObjectURL(url);
                 }
             };
+
             const handleImport = (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -134,17 +139,20 @@
                 return [...records]
                     .filter(r => {
                         const matchesSearch = r.puSaba.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                              r.shoukanList.some(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
+                                              r.shoukanList.some(s => s.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                                              (r.bikou && r.bikou.toLowerCase().includes(searchTerm.toLowerCase()));
                         const matchesTenjo = onlyTenjo ? (r.tenjo && r.tenjo > 0) : true;
                         return matchesSearch && matchesTenjo;
                     })
                     .sort((a, b) => new Date(b.date) - new Date(a.date));
             }, [records, searchTerm, onlyTenjo]);
+
             const availableYears = useMemo(() => {
                 const years = new Set(records.map(r => r.date.substring(0, 4)));
                 years.add(new Date().getFullYear().toString());
                 return Array.from(years).sort((a, b) => b - a);
             }, [records]);
+
             const updateShoukanSaba = (index, field, value) => {
                 const newList = [...shoukanList];
                 newList[index][field] = value;
@@ -170,10 +178,12 @@
                 setPuSaba(''); setDate(new Date().toISOString().split('T')[0]);
                 setCountA(''); setCountB(''); setTenjo(''); setIsNoFourStarPU(false); setShoukanList([{ name: '', count: '', type: '星5PU' }]); setBikou('');
             };
+
             const handleEditClick = (rec) => {
                 setEditingId(rec.id);
                 setPuSaba(rec.puSaba); setDate(rec.date); setCountA(rec.totalCount % 11); setCountB(Math.floor(rec.totalCount / 11)); setTenjo(rec.tenjo || '');
-                setIsNoFourStarPU(!!rec.isNoFourStarPU); setShoukanList(rec.shoukanList.length > 0 ? rec.shoukanList : [{ name: '', count: '', type: '星5PU' }]); setBikou(rec.bikou || '');
+                setIsNoFourStarPU(!!rec.isNoFourStarPU);
+                setShoukanList(rec.shoukanList.length > 0 ? rec.shoukanList : [{ name: '', count: '', type: '星5PU' }]); setBikou(rec.bikou || '');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
 
@@ -183,6 +193,7 @@
                     if (editingId === id) setEditingId(null);
                 }
             };
+
             const handleCopyToClipboard = () => {
                 if (records.length === 0) { alert('コピーするログがありません。'); return; }
                 const sortedAll = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -286,7 +297,8 @@
                 };
                 for (let stepIndex = 0; stepIndex < 11; stepIndex++) {
                     if (skipRef.current) {
-                        setIsRainbowEffect(false); setIsWobbling(false);
+                        setIsRainbowEffect(false);
+                        setIsWobbling(false);
                         const nextImportantIndex = draws.findIndex((d, idx) => idx >= stepIndex && [2, 3, 4].includes(d.config.pattern));
                         if (nextImportantIndex === -1) {
                             const remainingItems = draws.slice(stepIndex).map(d => d.item);
@@ -338,12 +350,12 @@
                     setCurrentItem(item); setSimResults(prev => [...prev, item]);
                     await wait(500);
                 }
-                setIsRainbowEffect(false); setIsWobbling(false);
+                setIsRainbowEffect(false);
+                setIsWobbling(false);
                 setSimPhase('result');
                 setSimTotalCount(prev => prev + 11);
                 
-                let fiveStarPu = 0; let fiveStarSurinuke = 0; let fourStarPu = 0;
-                let fourStarSurinuke = 0;
+                let fiveStarPu = 0; let fiveStarSurinuke = 0; let fourStarPu = 0; let fourStarSurinuke = 0;
                 draws.forEach(d => {
                     if (d.item.id === 'a') fiveStarPu++;
                     if (d.item.id === 'b') fiveStarSurinuke++;
@@ -444,7 +456,7 @@
                                     </div>
                                 </form>
                                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-blue-100 flex flex-col gap-3">
-                                    <input type="text" placeholder="🔍 検索 (PU鯖名・結果)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50" />
+                                    <input type="text" placeholder="🔍 検索 (PU鯖名・結果・備考)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50" />
                                     <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-600 font-bold">
                                         <input type="checkbox" checked={onlyTenjo} onChange={(e) => setOnlyTenjo(e.target.checked)} className="w-4 h-4 rounded border-slate-300" />
                                         天井した記録のみ表示
