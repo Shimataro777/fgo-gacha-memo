@@ -59,7 +59,6 @@
         const ITEM_C = { id: 'c', emoji: '🐓', name: 'ヒヨコ' };
         const ITEM_D = { id: 'd', emoji: '🐣', name: '卵の殻付きのヒヨコ' };
         const ITEM_E = { id: 'e', emoji: '🌱', name: '双葉' };
-
         function App() {
             const [activeTab, setActiveTab] = useState('memory');
             const [records, setRecords] = useState(() => {
@@ -77,17 +76,15 @@
             const [bikou, setBikou] = useState('');
             const [searchTerm, setSearchTerm] = useState('');
             const [onlyTenjo, setOnlyTenjo] = useState(false);
-
+            const [searchYear, setSearchYear] = useState('all');
             const totalCount = useMemo(() => {
                 const numA = countA === '' ? 0 : parseInt(countA);
                 const numB = countB === '' ? 0 : parseInt(countB);
                 return numA + (11 * numB);
             }, [countA, countB]);
-
             useEffect(() => {
                 localStorage.setItem('gacha_records', JSON.stringify(records));
             }, [records]);
-
             const handleExport = async () => {
                 const dataStr = JSON.stringify(records, null, 2);
                 const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -115,7 +112,6 @@
                     URL.revokeObjectURL(url);
                 }
             };
-
             const handleImport = (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -142,10 +138,11 @@
                                               r.shoukanList.some(s => s.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
                                               (r.bikou && r.bikou.toLowerCase().includes(searchTerm.toLowerCase()));
                         const matchesTenjo = onlyTenjo ? (r.tenjo && r.tenjo > 0) : true;
-                        return matchesSearch && matchesTenjo;
+                        const matchesYear = searchYear === 'all' ? true : r.date.substring(0, 4) === searchYear;
+                        return matchesSearch && matchesTenjo && matchesYear;
                     })
                     .sort((a, b) => new Date(b.date) - new Date(a.date));
-            }, [records, searchTerm, onlyTenjo]);
+            }, [records, searchTerm, onlyTenjo, searchYear]);
 
             const availableYears = useMemo(() => {
                 const years = new Set(records.map(r => r.date.substring(0, 4)));
@@ -178,7 +175,6 @@
                 setPuSaba(''); setDate(new Date().toISOString().split('T')[0]);
                 setCountA(''); setCountB(''); setTenjo(''); setIsNoFourStarPU(false); setShoukanList([{ name: '', count: '', type: '星5PU' }]); setBikou('');
             };
-
             const handleEditClick = (rec) => {
                 setEditingId(rec.id);
                 setPuSaba(rec.puSaba); setDate(rec.date); setCountA(rec.totalCount % 11); setCountB(Math.floor(rec.totalCount / 11)); setTenjo(rec.tenjo || '');
@@ -193,7 +189,6 @@
                     if (editingId === id) setEditingId(null);
                 }
             };
-
             const handleCopyToClipboard = () => {
                 if (records.length === 0) { alert('コピーするログがありません。'); return; }
                 const sortedAll = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -223,7 +218,6 @@
                         pickups += pickupCount;
                         tenjo += tenjoCount;
                         if (!r.isNoFourStarPU) countForFourStarRate += r.totalCount;
-
                         r.shoukanList.forEach(item => {
                             const type = item.type || '星5PU';
                             if (breakdown.hasOwnProperty(type)) {
@@ -255,7 +249,6 @@
             const [isWobbling, setIsWobbling] = useState(false);
             const [isRainbowEffect, setIsRainbowEffect] = useState(false);
             const [currentItem, setCurrentItem] = useState(null);
-
             const runSimulator11 = async () => {
                 const currentDiamonds = parseInt(diamonds) || 0;
                 if (currentDiamonds < 30) {
@@ -265,7 +258,6 @@
                 setDiamonds((currentDiamonds - 30).toString());
                 setSimPhase('animating');
                 setSimResults([]); skipRef.current = false;
-
                 let draws = [];
                 for (let i = 0; i < 11; i++) {
                     const r = Math.random() * 100;
@@ -286,7 +278,6 @@
                         pattern = 1; }
                     draws.push({ config: { pattern }, item });
                 }
-
                 const wait = async (ms) => {
                     let elapsed = 0;
                     while(elapsed < ms) {
@@ -312,10 +303,8 @@
                             continue;
                         }
                     }
-
                     const { config, item } = draws[stepIndex];
                     setCurrentStep(stepIndex + 1); setDisplayState('gift'); setGiftEmoji('🍄‍🟫'); setIsWobbling(false); setIsRainbowEffect(false);
-
                     if (config.pattern === 1) {
                         setGiftEmoji('🍄‍🟫');
                         await wait(300); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
@@ -341,7 +330,6 @@
                         await wait(1500); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
                         setIsRainbowEffect(false);
                     }
-
                     if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
                     setIsWobbling(false);
                     await wait(300);
@@ -354,8 +342,8 @@
                 setIsWobbling(false);
                 setSimPhase('result');
                 setSimTotalCount(prev => prev + 11);
-                
-                let fiveStarPu = 0; let fiveStarSurinuke = 0; let fourStarPu = 0; let fourStarSurinuke = 0;
+                let fiveStarPu = 0; let fiveStarSurinuke = 0; let fourStarPu = 0;
+                let fourStarSurinuke = 0;
                 draws.forEach(d => {
                     if (d.item.id === 'a') fiveStarPu++;
                     if (d.item.id === 'b') fiveStarSurinuke++;
@@ -380,7 +368,6 @@
                             </label>
                         </div>
                     </header>
-
                     <div className="bg-white p-1.5 rounded-xl shadow-sm border border-blue-100 flex gap-2 mb-6">
                         {['memory', 'stats', 'simulator'].map(tab => (
                             <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-3 rounded-lg font-bold text-sm transition ${activeTab === tab ? 'bg-blue-500 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>
@@ -388,79 +375,92 @@
                             </button>
                         ))}
                     </div>
-
                     <main className="flex-1">
                         {activeTab === 'memory' && (
                             <div className="space-y-6">
-                                <form onSubmit={handleSaveRecord} className="bg-white p-6 rounded-2xl shadow-sm border border-blue-100 space-y-5">
-                                    <h2 className="text-lg font-bold text-slate-800 border-l-4 border-blue-500 pl-2">📝 記録</h2>
-                                    <div className="flex gap-4">
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-600 mb-1">日付</label>
-                                            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-28 sm:w-32 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus:outline-none" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <label className="block text-xs font-bold text-slate-600 mb-1">PU鯖 *</label>
-                                            <input type="text" value={puSaba} onChange={(e) => setPuSaba(e.target.value)} required className="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus:outline-none" />
-                                        </div>
-                                    </div>
-                                    <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
-                                        <label className="block text-xs font-bold text-slate-700 mb-2">計算用</label>
-                                        <div className="flex flex-col gap-3">
-                                            <div className="flex items-center gap-4">
-                                                <div className="flex items-center gap-2"><span className="text-xs text-slate-500">単発:</span><input type="number" value={countA} onChange={(e) => setCountA(e.target.value)} className="w-16 border rounded-lg px-2 py-1 text-center bg-white" /></div>
-                                                <div className="flex items-center gap-2"><span className="text-xs text-slate-500">11連:</span><input type="number" value={countB} onChange={(e) => setCountB(e.target.value)} className="w-16 border rounded-lg px-2 py-1 text-center bg-white" /></div>
+                                <details className="bg-white rounded-2xl shadow-sm border border-blue-100 group" open={!!editingId}>
+                                    <summary className="p-6 font-bold text-lg text-slate-800 cursor-pointer list-none flex justify-between items-center select-none">
+                                        <h2 className="text-lg font-bold text-slate-800 border-l-4 border-blue-500 pl-2">📝 {editingId ? '記録を編集' : '記録を新規追加'}</h2>
+                                        <span className="text-sm text-blue-500 group-open:rotate-180 transition-transform">▼</span>
+                                    </summary>
+                                    <form onSubmit={handleSaveRecord} className="p-6 pt-0 space-y-5">
+                                        <div className="flex gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-600 mb-1">日付</label>
+                                                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-28 sm:w-32 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus:outline-none" />
                                             </div>
-                                            <div className="text-sm font-bold pt-1 border-t border-blue-100/30">合計: <span className="text-xl text-blue-600">{totalCount}</span> 連</div>
+                                            <div className="flex-1">
+                                                <label className="block text-xs font-bold text-slate-600 mb-1">PU鯖 *</label>
+                                                <input type="text" value={puSaba} onChange={(e) => setPuSaba(e.target.value)} required className="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus:outline-none" />
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="flex gap-4 items-center">
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-600 mb-1">天井した回数</label>
-                                            <select value={tenjo} onChange={(e) => setTenjo(e.target.value)} className="w-20 border border-slate-200 rounded-lg px-2 py-1 bg-slate-50 text-sm">
-                                                {[0, 1, 2, 3, 4, 5].map(num => (<option key={num} value={num}>{num}</option>))}
-                                            </select>
+                                        <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
+                                            <label className="block text-xs font-bold text-slate-700 mb-2">計算用</label>
+                                            <div className="flex flex-col gap-3">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex items-center gap-2"><span className="text-xs text-slate-500">単発:</span><input type="number" value={countA} onChange={(e) => setCountA(e.target.value)} className="w-16 border rounded-lg px-2 py-1 text-center bg-white" /></div>
+                                                    <div className="flex items-center gap-2"><span className="text-xs text-slate-500">11連:</span><input type="number" value={countB} onChange={(e) => setCountB(e.target.value)} className="w-16 border rounded-lg px-2 py-1 text-center bg-white" /></div>
+                                                </div>
+                                                <div className="text-sm font-bold pt-1 border-t border-blue-100/30">合計: <span className="text-xl text-blue-600">{totalCount}</span> 連</div>
+                                            </div>
                                         </div>
-                                        <label className="flex items-center gap-1.5 cursor-pointer mt-5">
-                                            <input type="checkbox" checked={isNoFourStarPU} onChange={(e) => setIsNoFourStarPU(e.target.checked)} className="w-5 h-5 rounded border-slate-300" />
-                                            <span className="text-sm font-bold text-slate-600 whitespace-nowrap">星4PUなし</span>
-                                        </label>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="block text-xs font-bold text-slate-600">ガチャ結果</label>
-                                        {shoukanList.map((shoukan, index) => (
-                                            <div key={index} className="flex items-center gap-1.5 flex-nowrap mb-2">
-                                                <select value={shoukan.type || '星5PU'} onChange={(e) => updateShoukanSaba(index, 'type', e.target.value)} className="border border-slate-200 rounded-lg px-1 py-1 bg-white text-sm shrink-0">
-                                                    <option value="星5PU">星5PU</option>
-                                                    <option value="星5他">星5他</option>
-                                                    <option value="星4PU">星4PU</option>
-                                                    <option value="その他">その他</option>
-                                                    <option value="特殊">特殊</option>
+                                        <div className="flex gap-4 items-center">
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-600 mb-1">天井した回数</label>
+                                                <select value={tenjo} onChange={(e) => setTenjo(e.target.value)} className="w-20 border border-slate-200 rounded-lg px-2 py-1 bg-slate-50 text-sm">
+                                                    {[0, 1, 2, 3, 4, 5].map(num => (<option key={num} value={num}>{num}</option>))}
                                                 </select>
-                                                <input type="text" placeholder="召喚した鯖名" value={shoukan.name} onChange={(e) => updateShoukanSaba(index, 'name', e.target.value)} className="flex-1 min-w-[80px] border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-sm" />
-                                                <input type="number" value={shoukan.count} onChange={(e) => updateShoukanSaba(index, 'count', e.target.value)} placeholder="1" className="w-10 border border-slate-200 rounded-lg px-1 py-1.5 text-center bg-white text-sm shrink-0" />
-                                                {shoukanList.length > 1 && (
-                                                    <button type="button" onClick={() => setShoukanList(shoukanList.filter((_, i) => i !== index))} className="text-rose-500 font-bold px-2 py-1 hover:bg-rose-50 rounded-lg transition shrink-0">✕</button>
-                                                )}
                                             </div>
-                                        ))}
-                                        <button type="button" onClick={() => setShoukanList([...shoukanList, { name: '', count: '', type: '星5PU' }])} className="text-xs font-bold text-blue-600 mt-2 block">＋ 鯖を追加</button>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-600 mb-1">備考</label>
-                                        <textarea value={bikou} onChange={(e) => setBikou(e.target.value)} rows="1" className="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50" />
-                                    </div>
-                                    <div className="flex gap-2 pt-2">
-                                        <button type="submit" className="flex-1 bg-blue-500 text-white font-bold py-3 rounded-xl hover:bg-blue-600">{editingId ? '変更を保存' : '記録する'}</button>
-                                        {editingId && <button type="button" onClick={() => setEditingId(null)} className="bg-slate-200 px-4 rounded-xl font-bold">キャンセル</button>}
-                                    </div>
-                                </form>
+                                            <label className="flex items-center gap-1.5 cursor-pointer mt-5">
+                                                <input type="checkbox" checked={isNoFourStarPU} onChange={(e) => setIsNoFourStarPU(e.target.checked)} className="w-5 h-5 rounded border-slate-300" />
+                                                <span className="text-sm font-bold text-slate-600 whitespace-nowrap">星4PUなし</span>
+                                            </label>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="block text-xs font-bold text-slate-600">ガチャ結果</label>
+                                            {shoukanList.map((shoukan, index) => (
+                                                <div key={index} className="flex items-center gap-1.5 flex-nowrap mb-2">
+                                                    <select value={shoukan.type || '星5PU'} onChange={(e) => updateShoukanSaba(index, 'type', e.target.value)} className="border border-slate-200 rounded-lg px-1 py-1 bg-white text-sm shrink-0">
+                                                        <option value="星5PU">星5PU</option>
+                                                        <option value="星5他">星5他</option>
+                                                        <option value="星4PU">星4PU</option>
+                                                        <option value="その他">その他</option>
+                                                        <option value="特殊">特殊</option>
+                                                    </select>
+                                                    <input type="text" placeholder="召喚した鯖名" value={shoukan.name} onChange={(e) => updateShoukanSaba(index, 'name', e.target.value)} className="flex-1 min-w-[80px] border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-sm" />
+                                                    <input type="number" value={shoukan.count} onChange={(e) => updateShoukanSaba(index, 'count', e.target.value)} placeholder="1" className="w-10 border border-slate-200 rounded-lg px-1 py-1.5 text-center bg-white text-sm shrink-0" />
+                                                    {shoukanList.length > 1 && (
+                                                        <button type="button" onClick={() => setShoukanList(shoukanList.filter((_, i) => i !== index))} className="text-rose-500 font-bold px-2 py-1 hover:bg-rose-50 rounded-lg transition shrink-0">✕</button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            <button type="button" onClick={() => setShoukanList([...shoukanList, { name: '', count: '', type: '星5PU' }])} className="text-xs font-bold text-blue-600 mt-2 block">＋ 鯖を追加</button>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-600 mb-1">備考</label>
+                                            <textarea value={bikou} onChange={(e) => setBikou(e.target.value)} rows="1" className="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50" />
+                                        </div>
+                                        <div className="flex gap-2 pt-2">
+                                            <button type="submit" className="flex-1 bg-blue-500 text-white font-bold py-3 rounded-xl hover:bg-blue-600">{editingId ? '変更を保存' : '記録する'}</button>
+                                            {editingId && <button type="button" onClick={() => setEditingId(null)} className="bg-slate-200 px-4 rounded-xl font-bold">キャンセル</button>}
+                                        </div>
+                                    </form>
+                                </details>
                                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-blue-100 flex flex-col gap-3">
                                     <input type="text" placeholder="🔍 検索 (PU鯖名・結果・備考)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50" />
-                                    <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-600 font-bold">
-                                        <input type="checkbox" checked={onlyTenjo} onChange={(e) => setOnlyTenjo(e.target.checked)} className="w-4 h-4 rounded border-slate-300" />
-                                        天井した記録のみ表示
-                                    </label>
+                                    
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex-1">
+                                            <select value={searchYear} onChange={(e) => setSearchYear(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 text-sm">
+                                                <option value="all">全期間</option>
+                                                {availableYears.map(y => <option key={y} value={y}>{y}年</option>)}
+                                            </select>
+                                        </div>
+                                        <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-600 font-bold whitespace-nowrap">
+                                            <input type="checkbox" checked={onlyTenjo} onChange={(e) => setOnlyTenjo(e.target.checked)} className="w-4 h-4 rounded border-slate-300" />
+                                            天井のみ表示
+                                        </label>
+                                    </div>
                                 </div>
                                 <div className="space-y-4">
                                     <h2 className="text-lg font-bold text-slate-800">履歴</h2>
