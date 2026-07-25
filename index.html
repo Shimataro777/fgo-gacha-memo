@@ -2,638 +2,1319 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FGOガチャ備忘録</title>
-    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>奪え！マンゴー！</title>
     <style>
-        body { font-family: 'Noto Sans JP', sans-serif;
-        background-color: #f0f4f8; }
-        @keyframes wobble {
-            0% { transform: rotate(0deg) scale(1);
-            }
-            25% { transform: rotate(-8deg) scale(1.1);
-            }
-            50% { transform: rotate(8deg) scale(1.1);
-            }
-            75% { transform: rotate(-4deg) scale(1.05);
-            }
-            100% { transform: rotate(0deg) scale(1);
-            }
+        @import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
+
+        *, *::before, *::after {
+            box-sizing: border-box;
         }
-        @keyframes jojo {
-            0% { transform: scale(0);
-            opacity: 0; }
-            50% { transform: scale(1.3); opacity: 1;
-            }
-            100% { transform: scale(1); opacity: 1;
-            }
+
+        body {
+            background-color: #d1c29b;
+            color: #2c221e;
+            font-family: 'DotGothic16', monospace;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+            overflow: hidden;
+            touch-action: manipulation;
         }
-        @keyframes rainbow-spin {
-            0% { filter: hue-rotate(0deg);
-            transform: scale(1) rotate(0deg); }
-            50% { transform: scale(1.1) rotate(180deg);
-            }
-            100% { filter: hue-rotate(360deg); transform: scale(1) rotate(360deg);
-            }
+
+        .game-header, .game-footer {
+            height: 48px;
+            background: #b89775;
+            border-top: 3px solid #8c6747;
+            border-bottom: 3px solid #8c6747;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            z-index: 30;
+            flex-shrink: 0;
+            font-size: 12px;
+            color: #5c3a21;
+            font-weight: bold;
+            letter-spacing: 0.5px;
         }
-        @keyframes flash {
-            0%, 100% { opacity: 0;
-            }
-            50% { opacity: 0.8; background-color: #ffffff;
-            }
+        .game-header {
+            border-top: none;
+            justify-content: flex-end; /* 右側に配置 */
+            transform: rotate(180deg); /* 180度回転 */
         }
-        @keyframes fadeIn {
-            from { opacity: 0;
-            }
-            to { opacity: 1;
-            }
+        .game-footer {
+            border-bottom: none;
+            justify-content: flex-end;
         }
-        @keyframes slideUp {
-            from { opacity: 0;
-            transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0);
-            }
+
+        .player-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            position: relative;
+            border-bottom: 3px solid #6b5344;
+            background: #ecdcc2;
+            transition: background 0.3s;
         }
-        .animate-wobble { animation: wobble 0.15s ease-in-out infinite;
+
+        #top-player {
+            transform: rotate(180deg);
         }
-        .animate-jojo { animation: jojo 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+
+        #bottom-player {
+            border-bottom: none;
         }
-        .animate-rainbow { animation: rainbow-spin 1.5s linear infinite;
+
+        #top-player .player-label,
+        #bottom-player .player-label {
+            display: none;
         }
-        .animate-flash { animation: flash 0.4s ease-in-out 2;
+
+        @keyframes hit-recoil {
+            0% { transform: scale(1) translateX(0); }
+            20% { transform: scale(1.15) translateX(-8px) rotate(-5deg); filter: brightness(1.5) sepia(1); }
+            40% { transform: scale(1.1) translateX(8px) rotate(5deg); }
+            60% { transform: scale(1.05) translateX(-4px); }
+            100% { transform: scale(1) translateX(0); }
         }
-        .animate-fade-in-group { animation: fadeIn 0.8s ease-out forwards; opacity: 0;
+
+        .hit-effect {
+            animation: hit-recoil 0.35s ease-in-out;
         }
-        .animate-fade-in-item { animation: slideUp 0.5s ease-out forwards; opacity: 0;
+
+        .flash-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(255, 140, 20, 0.65) 0%, rgba(200, 30, 0, 0.75) 100%);
+            opacity: 0;
+            pointer-events: none;
+            mix-blend-mode: overlay;
+            transition: opacity 0.05s ease-out;
+            z-index: 10;
         }
-        input, textarea, select { font-size: 16px !important;
+
+        .flash-active {
+            opacity: 1;
+        }
+
+        .arena {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: auto 0;
+            z-index: 5;
+            transform: translateY(20px);
+        }
+
+        #top-player .arena {
+            transform: translateY(20px);
+        }
+
+        .marmot-container {
+            width: 90px;
+            height: 90px;
+            margin-bottom: 2px;
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: drop-shadow(0 3px 5px rgba(0,0,0,0.25));
+            image-rendering: pixelated;
+            position: relative;
+        }
+
+        .marmot-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+
+        .marmot-container.waiting-anim .svg-frame-1 {
+            display: block;
+            animation: toggle-anim-1 0.4s infinite steps(1);
+        }
+
+        .marmot-container.waiting-anim .svg-frame-2 {
+            display: block;
+            animation: toggle-anim-2 0.4s infinite steps(1);
+        }
+
+        @keyframes toggle-anim-1 {
+            0%, 49.99% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        @keyframes toggle-anim-2 {
+            0%, 49.99% { opacity: 0; }
+            50%, 100% { opacity: 1; }
+        }
+
+        .marmot-container:not(.waiting-anim) .svg-frame-1 {
+            display: block;
+        }
+        .marmot-container:not(.waiting-anim) .svg-frame-2 {
+            display: none;
+        }
+
+        .marmot-container.shoot {
+            transform: scale(1.3) rotate(10deg);
+        }
+
+        .marmot-container.dead {
+            filter: grayscale(1) brightness(0.6) opacity(0.7);
+            transform: rotate(-90deg) translateY(10px);
+        }
+
+        .status-text {
+            font-family: 'DotGothic16', monospace;
+            font-size: 14px;
+            font-weight: bold;
+            color: #5c3a21;
+            height: 20px;
+            text-align: center;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+
+        .result-detail {
+            font-size: 13px;
+            color: #8C6747;
+            height: 22px;
+            font-weight: bold;
+        }
+
+        #global-center-stage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: transparent;
+            border: none;
+            border-radius: 0px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            box-shadow: none;
+            image-rendering: pixelated;
+        }
+
+        .bottom-controls {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 4px;
+            z-index: 5;
+            position: relative;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .score-icons {
+            display: flex;
+            gap: 2px;
+            align-items: center;
+            padding: 2px 4px;
+            background: #e6d3b3;
+            border: 1px solid #bda886;
+            border-radius: 4px;
+            height: 36px;
+        }
+
+        .star-icon {
+            font-size: 11px;
+            color: #bfa580;
+            line-height: 1;
+            transition: color 0.2s, transform 0.2s;
+            opacity: 0.3;
+        }
+
+        .star-icon.won {
+            color: #d4ac0d;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            transform: scale(1.1);
+            opacity: 1;
+        }
+
+        .icon-btn {
+            background: #e6d3b3;
+            border: 1px solid #bda886;
+            border-radius: 4px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            color: #4a3324;
+            font-size: 14px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .icon-btn:active {
+            background: #d4bc95;
+        }
+
+        .action-btn {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #704b2b;
+            color: #fff;
+            border: 1px solid #543d32;
+            padding: 8px 24px;
+            font-size: 14px;
+            font-family: 'DotGothic16', monospace;
+            font-weight: bold;
+            letter-spacing: 1px;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+            transition: all 0.1s;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 6;
+        }
+
+        .action-btn:active {
+            transform: translateX(-50%) translateY(1px);
+        }
+
+        .action-btn.ready-state {
+            background: #1e8449;
+            border-color: #145a32;
+        }
+
+        .action-btn:disabled {
+            background: #beafa0;
+            border-color: #ab9b88;
+            color: #7a6d5e;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #start-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(44, 34, 30, 0.75);
+            backdrop-filter: blur(3px);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.3s ease;
+        }
+
+        #start-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #start-overlay.orient-p1 .overlay-card {
+            transform: rotate(0deg);
+        }
+        #start-overlay.orient-p2 .overlay-card {
+            transform: rotate(180deg);
+        }
+
+        .overlay-card {
+            background: #f4ebd0;
+            border: 3px solid #a67c52;
+            padding: 30px 40px;
+            border-radius: 8px;
+            text-align: center;
+            color: #2c221e;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            transition: transform 0.2s ease;
+        }
+
+        .overlay-card h2 {
+            margin-top: 0;
+            color: #5c3a21;
+            font-family: 'DotGothic16', monospace;
+            font-size: 24px;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .overlay-sub {
+            font-size: 14px;
+            color: #8c6747;
+            font-weight: bold;
+            margin-bottom: 20px;
+            height: 20px;
+        }
+
+        .big-start-btn {
+            background: #704b2b;
+            color: #fff;
+            border: 2px solid #543d32;
+            padding: 12px 32px;
+            font-size: 18px;
+            font-family: 'DotGothic16', monospace;
+            font-weight: bold;
+            letter-spacing: 2px;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.1s, background 0.1s;
+        }
+
+        .big-start-btn:active {
+            transform: translateY(2px);
+            background: #5a3a20;
+        }
+
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(44,34,30,0.6);
+            backdrop-filter: blur(2px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: #f4ebd0;
+            border: 2px solid #a67c52;
+            padding: 22px;
+            border-radius: 6px;
+            max-width: 320px;
+            text-align: center;
+            color: #2c221e;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .modal-content h3 { 
+            margin-top: 0; 
+            font-family: 'DotGothic16', monospace;
+            color: #5c3a21;
+            border-bottom: 1px solid #d4c2a5;
+            padding-bottom: 8px;
+        }
+        .modal-content button {
+            margin-top: 15px;
+            padding: 6px 16px;
+            background: #704b2b;
+            color: #fff;
+            border: 1px solid #543d32;
+            font-family: 'DotGothic16', monospace;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef } = React;
-        const ITEM_A = { id: 'a', emoji: '🌏', name: '地球' };
-        const ITEM_B = { id: 'b', emoji: '🌕', name: '金色の丸い月' };
-        const ITEM_C = { id: 'c', emoji: '🐓', name: 'ヒヨコ' };
-        const ITEM_D = { id: 'd', emoji: '🐣', name: '卵の殻付きのヒヨコ' };
-        const ITEM_E = { id: 'e', emoji: '🌱', name: '双葉' };
-        function App() {
-            const [activeTab, setActiveTab] = useState('memory');
-            const [records, setRecords] = useState(() => {
-                const saved = localStorage.getItem('gacha_records');
-                return saved ? JSON.parse(saved) : [];
-            });
-            const [editingId, setEditingId] = useState(null);
-            const [puSaba, setPuSaba] = useState('');
-            const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-            const [countA, setCountA] = useState('');
-            const [countB, setCountB] = useState('');
-            const [tenjo, setTenjo] = useState('');
-            const [isNoFourStarPU, setIsNoFourStarPU] = useState(false);
-            const [shoukanList, setShoukanList] = useState([{ name: '', count: '', type: '星5PU' }]);
-            const [bikou, setBikou] = useState('');
-            const [searchTerm, setSearchTerm] = useState('');
-            const [onlyTenjo, setOnlyTenjo] = useState(false);
-            const [searchYear, setSearchYear] = useState('all');
-            const totalCount = useMemo(() => {
-                const numA = countA === '' ? 0 : parseInt(countA);
-                const numB = countB === '' ? 0 : parseInt(countB);
-                return numA + (11 * numB);
-            }, [countA, countB]);
-            useEffect(() => {
-                localStorage.setItem('gacha_records', JSON.stringify(records));
-            }, [records]);
-            const handleExport = async () => {
-                const dataStr = JSON.stringify(records, null, 2);
-                const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-                const fileName = `FGOrecord_${dateStr}.json`;
-                if ('showSaveFilePicker' in window) {
-                    try {
-                        const handle = await window.showSaveFilePicker({
-                            suggestedName: fileName,
-                            types: [{ description: 'JSONファイル', accept: { 'application/json': ['.json'] } }],
-                        });
-                        const writable = await handle.createWritable();
-                        await writable.write(dataStr);
-                        await writable.close();
-                        alert('保存しました！');
-                    } catch (err) {
-                        if (err.name !== 'AbortError') console.error(err);
-                    }
-                } else {
-                    const blob = new Blob([dataStr], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = fileName;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                }
-            };
-            const handleImport = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    try {
-                        const importedData = JSON.parse(event.target.result);
-                        if (confirm('現在の記録を上書きしてインポートしますか？')) {
-                            setRecords(importedData);
-                            alert('読み込みました！');
-                        }
-                    } catch (error) {
-                        alert('ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。');
-                    }
-                };
-                reader.readAsText(file);
-                e.target.value = '';
-            };
+    <div id="start-overlay" class="orient-p1">
+        <div class="overlay-card">
+            <h2 id="overlay-title">奪え！マンゴー！</h2>
+            <div id="overlay-sub" class="overlay-sub"></div>
+            <button class="big-start-btn" id="overlay-btn" onclick="triggerMainGameStart()">ゲームスタート</button>
+        </div>
+    </div>
 
-            const filteredRecords = useMemo(() => {
-                return [...records]
-                    .filter(r => {
-                        const matchesSearch = r.puSaba.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                              r.shoukanList.some(s => s.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                                              (r.bikou && r.bikou.toLowerCase().includes(searchTerm.toLowerCase()));
-                        const matchesTenjo = onlyTenjo ? (r.tenjo && r.tenjo > 0) : true;
-                        const matchesYear = searchYear === 'all' ? true : r.date.substring(0, 4) === searchYear;
-                        return matchesSearch && matchesTenjo && matchesYear;
-                    })
-                    .sort((a, b) => new Date(b.date) - new Date(a.date));
-            }, [records, searchTerm, onlyTenjo, searchYear]);
-            const availableYears = useMemo(() => {
-                const years = new Set(records.map(r => r.date.substring(0, 4)));
-                years.add(new Date().getFullYear().toString());
-                return Array.from(years).sort((a, b) => b - a);
-            }, [records]);
-            const updateShoukanSaba = (index, field, value) => {
-                const newList = [...shoukanList];
-                newList[index][field] = value;
-                setShoukanList(newList);
-            };
+    <header class="game-header">マーモット2</header>
 
-            const handleSaveRecord = (e) => {
-                e.preventDefault();
-                if (!puSaba.trim()) { alert('PU鯖名を入力してください。'); return; }
-                const formattedList = shoukanList.filter(s => s.name.trim() !== '').map(s => ({
-                    name: s.name, count: s.count === '' ? 1 : parseInt(s.count), type: s.type || '星5PU'
-                }));
-                if (editingId) {
-                    setRecords(records.map(rec => rec.id === editingId ? {
-                        ...rec, puSaba, date, totalCount, tenjo: tenjo ? parseInt(tenjo) : null, isNoFourStarPU, shoukanList: formattedList, bikou
-                    } : rec));
-                    setEditingId(null);
-                    alert('記録の修正を保存しました！');
-                } else {
-                    setRecords([{ id: Date.now(), puSaba, date, totalCount, tenjo: tenjo ? parseInt(tenjo) : null, isNoFourStarPU, shoukanList: formattedList, bikou }, ...records]);
-                    alert('新しい記録を保存しました！');
-                }
-                setPuSaba(''); setDate(new Date().toISOString().split('T')[0]);
-                setCountA(''); setCountB(''); setTenjo(''); setIsNoFourStarPU(false); setShoukanList([{ name: '', count: '', type: '星5PU' }]); setBikou('');
-            };
-            const handleEditClick = (rec) => {
-                setEditingId(rec.id);
-                setPuSaba(rec.puSaba); setDate(rec.date); setCountA(rec.totalCount % 11); setCountB(Math.floor(rec.totalCount / 11)); setTenjo(rec.tenjo || '');
-                setIsNoFourStarPU(!!rec.isNoFourStarPU);
-                setShoukanList(rec.shoukanList.length > 0 ? rec.shoukanList : [{ name: '', count: '', type: '星5PU' }]); setBikou(rec.bikou || '');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            };
+    <div id="global-center-stage"></div>
 
-            const handleDeleteRecord = (id) => {
-                if (confirm('この記録を削除しますか？')) {
-                    setRecords(records.filter(r => r.id !== id));
-                    if (editingId === id) setEditingId(null);
-                }
-            };
-            const handleCopyToClipboard = () => {
-                if (records.length === 0) { alert('コピーするログがありません。');
-                return; }
-                const sortedAll = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
-                const text = sortedAll.map(r => {
-                    return `◼️${r.date}\n・PU：${r.puSaba}\n・合計：${r.totalCount}連\n・天井：${r.tenjo || 0}回${r.isNoFourStarPU ? ' (星4PUなし)' : ''}\n＜結果＞\n${r.shoukanList.map(s => `・${s.name} ${s.count}`).join('\n')}`
-                }).join('\n\n');
-                navigator.clipboard.writeText(text).then(() => { alert('履歴をコピーしました！'); });
-            };
+    <div id="top-player" class="player-side" data-player="2">
+        <div class="player-label">マーモット 2</div>
+        <div class="flash-overlay" id="p2-flash"></div>
 
-            const [statYear, setStatYear] = useState(new Date().getFullYear().toString());
-            const stats = useMemo(() => {
-                let count = 0;
-                let pickups = 0;
-                let tenjo = 0;
-                let countForFourStarRate = 0;
-                const monthlyData = {};
-                const breakdown = { '星5PU': 0, '星5他': 0, '星4PU': 0, '特殊': 0 };
+        <div class="arena">
+            <div class="marmot-container" id="p2-avatar">
+                <svg class="marmot-svg svg-frame-1" viewBox="0 0 32 32" width="100%" height="100%" style="shape-rendering: crispEdges;">
+                    <rect x="13" y="4" width="2" height="2" fill="#8f6b3e"/>
+                    <rect x="17" y="4" width="2" height="2" fill="#8f6b3e"/>
+                    <rect x="10" y="5" width="12" height="7" fill="#bfa172"/>
+                    <rect x="9" y="7" width="14" height="5" fill="#cbb187"/>
+                    <rect x="10" y="6" width="3" height="3" fill="#8f6b3e"/>
+                    <rect x="19" y="6" width="3" height="3" fill="#8f6b3e"/>
+                    <rect x="9" y="6" width="6" height="4" fill="#111111"/>
+                    <rect x="17" y="6" width="6" height="4" fill="#111111"/>
+                    <rect x="15" y="7" width="2" height="2" fill="#111111"/>
+                    <rect x="10" y="7" width="2" height="1" fill="#666666"/>
+                    <rect x="18" y="7" width="2" height="1" fill="#666666"/>
+                    <rect x="13" y="10" width="6" height="2" fill="#221105"/>
+                    <rect x="14" y="11" width="4" height="2" fill="#111111"/>
+                    <rect x="15" y="13" width="2" height="2" fill="#ffffff"/>
+                    <rect x="15" y="13" width="1" height="2" fill="#d0d0d0"/>
+                    <rect x="8" y="12" width="16" height="15" fill="#c49a5b"/>
+                    <rect x="7" y="16" width="18" height="10" fill="#d9ad6f"/>
+                    <rect x="10" y="15" width="12" height="8" fill="#ecd094"/>
+                    <rect x="11" y="17" width="10" height="5" fill="#f7e1ad"/>
+                    <rect x="10" y="19" width="4" height="6" fill="#7a522e"/>
+                    <rect x="18" y="19" width="4" height="6" fill="#7a522e"/>
+                    <rect x="10" y="25" width="1" height="1" fill="#111111"/>
+                    <rect x="12" y="25" width="1" height="1" fill="#111111"/>
+                    <rect x="19" y="25" width="1" height="1" fill="#111111"/>
+                    <rect x="21" y="25" width="1" height="1" fill="#111111"/>
+                </svg>
+                <svg class="marmot-svg svg-frame-2" viewBox="0 0 32 32" width="100%" height="100%" style="shape-rendering: crispEdges;">
+                    <rect x="13" y="5" width="2" height="2" fill="#8f6b3e"/>
+                    <rect x="17" y="5" width="2" height="2" fill="#8f6b3e"/>
+                    <rect x="10" y="6" width="12" height="7" fill="#bfa172"/>
+                    <rect x="9" y="8" width="14" height="5" fill="#cbb187"/>
+                    <rect x="10" y="7" width="3" height="3" fill="#8f6b3e"/>
+                    <rect x="19" y="7" width="3" height="3" fill="#8f6b3e"/>
+                    <rect x="9" y="7" width="6" height="4" fill="#111111"/>
+                    <rect x="17" y="7" width="6" height="4" fill="#111111"/>
+                    <rect x="15" y="8" width="2" height="2" fill="#111111"/>
+                    <rect x="10" y="8" width="2" height="1" fill="#666666"/>
+                    <rect x="18" y="8" width="2" height="1" fill="#666666"/>
+                    <rect x="13" y="11" width="6" height="2" fill="#221105"/>
+                    <rect x="14" y="12" width="4" height="2" fill="#111111"/>
+                    <rect x="15" y="14" width="2" height="2" fill="#ffffff"/>
+                    <rect x="15" y="14" width="1" height="2" fill="#d0d0d0"/>
+                    <rect x="8" y="13" width="16" height="14" fill="#c49a5b"/>
+                    <rect x="7" y="16" width="18" height="9" fill="#d9ad6f"/>
+                    <rect x="10" y="15" width="12" height="7" fill="#ecd094"/>
+                    <rect x="11" y="17" width="10" height="4" fill="#f7e1ad"/>
+                    <rect x="10" y="18" width="4" height="5" fill="#7a522e"/>
+                    <rect x="18" y="18" width="4" height="5" fill="#7a522e"/>
+                    <rect x="10" y="23" width="1" height="1" fill="#111111"/>
+                    <rect x="12" y="23" width="1" height="1" fill="#111111"/>
+                    <rect x="19" y="23" width="1" height="1" fill="#111111"/>
+                    <rect x="21" y="23" width="1" height="1" fill="#111111"/>
+                </svg>
+            </div>
+            <div class="status-text" id="p2-status">ボタンを押して準備</div>
+            <div class="result-detail" id="p2-detail"></div>
+        </div>
 
-                records.forEach(r => {
-                    const y = r.date.substring(0, 4);
-                    const m = r.date.substring(0, 7);
-                    const pickupCount = r.shoukanList.reduce((sum, item) => sum + parseInt(item.count || 0), 0);
-                    const tenjoCount = parseInt(r.tenjo || 0);
+        <div class="bottom-controls">
+            <div class="control-group">
+                <button class="icon-btn" onclick="openStartOverlay(); event.stopPropagation();" title="リセット">↺</button>
+                <div class="score-icons" id="p2-score-icons">
+                    <span class="star-icon">🥭</span>
+                    <span class="star-icon">🥭</span>
+                    <span class="star-icon">🥭</span>
+                </div>
+            </div>
+            <button class="action-btn" id="p2-btn" data-player="2">開始</button>
+            <button class="icon-btn" onclick="toggleModal(); event.stopPropagation();">?</button>
+        </div>
+    </div>
 
-                    if (statYear === 'all' || parseInt(y) === parseInt(statYear)) {
-                        count += r.totalCount;
-                        pickups += pickupCount;
-                        tenjo += tenjoCount;
-                        if (!r.isNoFourStarPU) countForFourStarRate += r.totalCount;
-                        r.shoukanList.forEach(item => {
-                            const type = item.type || '星5PU';
-                            if (breakdown.hasOwnProperty(type)) {
-                                breakdown[type] += parseInt(item.count || 0);
-                            }
-                        });
-                        if (statYear !== 'all') {
-                            if (!monthlyData[m]) monthlyData[m] = { count: 0, pickups: 0 };
-                            monthlyData[m].count += r.totalCount;
-                            monthlyData[m].pickups += pickupCount;
-                        }
-                    }
+    <div id="bottom-player" class="player-side" data-player="1">
+        <div class="player-label">マーモット 1</div>
+        <div class="flash-overlay" id="p1-flash"></div>
+
+        <div class="arena">
+            <div class="marmot-container" id="p1-avatar">
+                <svg class="marmot-svg svg-frame-1" viewBox="0 0 32 32" width="100%" height="100%" style="shape-rendering: crispEdges;">
+                    <rect x="13" y="4" width="2" height="2" fill="#8f6b3e"/>
+                    <rect x="17" y="4" width="2" height="2" fill="#8f6b3e"/>
+                    <rect x="10" y="5" width="12" height="7" fill="#bfa172"/>
+                    <rect x="9" y="7" width="14" height="5" fill="#cbb187"/>
+                    <rect x="10" y="6" width="3" height="3" fill="#8f6b3e"/>
+                    <rect x="19" y="6" width="3" height="3" fill="#8f6b3e"/>
+                    <rect x="9" y="6" width="6" height="4" fill="#111111"/>
+                    <rect x="17" y="6" width="6" height="4" fill="#111111"/>
+                    <rect x="15" y="7" width="2" height="2" fill="#111111"/>
+                    <rect x="10" y="7" width="2" height="1" fill="#666666"/>
+                    <rect x="18" y="7" width="2" height="1" fill="#666666"/>
+                    <rect x="13" y="10" width="6" height="2" fill="#221105"/>
+                    <rect x="14" y="11" width="4" height="2" fill="#111111"/>
+                    <rect x="15" y="13" width="2" height="2" fill="#ffffff"/>
+                    <rect x="15" y="13" width="1" height="2" fill="#d0d0d0"/>
+                    <rect x="8" y="12" width="16" height="15" fill="#c49a5b"/>
+                    <rect x="7" y="16" width="18" height="10" fill="#d9ad6f"/>
+                    <rect x="10" y="15" width="12" height="8" fill="#ecd094"/>
+                    <rect x="11" y="17" width="10" height="5" fill="#f7e1ad"/>
+                    <rect x="10" y="19" width="4" height="6" fill="#7a522e"/>
+                    <rect x="18" y="19" width="4" height="6" fill="#7a522e"/>
+                    <rect x="10" y="25" width="1" height="1" fill="#111111"/>
+                    <rect x="12" y="25" width="1" height="1" fill="#111111"/>
+                    <rect x="19" y="25" width="1" height="1" fill="#111111"/>
+                    <rect x="21" y="25" width="1" height="1" fill="#111111"/>
+                </svg>
+                <svg class="marmot-svg svg-frame-2" viewBox="0 0 32 32" width="100%" height="100%" style="shape-rendering: crispEdges;">
+                    <rect x="13" y="5" width="2" height="2" fill="#8f6b3e"/>
+                    <rect x="17" y="5" width="2" height="2" fill="#8f6b3e"/>
+                    <rect x="10" y="6" width="12" height="7" fill="#bfa172"/>
+                    <rect x="9" y="8" width="14" height="5" fill="#cbb187"/>
+                    <rect x="10" y="7" width="3" height="3" fill="#8f6b3e"/>
+                    <rect x="19" y="7" width="3" height="3" fill="#8f6b3e"/>
+                    <rect x="9" y="7" width="6" height="4" fill="#111111"/>
+                    <rect x="17" y="7" width="6" height="4" fill="#111111"/>
+                    <rect x="15" y="8" width="2" height="2" fill="#111111"/>
+                    <rect x="10" y="8" width="2" height="1" fill="#666666"/>
+                    <rect x="18" y="8" width="2" height="1" fill="#666666"/>
+                    <rect x="13" y="11" width="6" height="2" fill="#221105"/>
+                    <rect x="14" y="12" width="4" height="2" fill="#111111"/>
+                    <rect x="15" y="14" width="2" height="2" fill="#ffffff"/>
+                    <rect x="15" y="14" width="1" height="2" fill="#d0d0d0"/>
+                    <rect x="8" y="13" width="16" height="14" fill="#c49a5b"/>
+                    <rect x="7" y="16" width="18" height="9" fill="#d9ad6f"/>
+                    <rect x="10" y="15" width="12" height="7" fill="#ecd094"/>
+                    <rect x="11" y="17" width="10" height="4" fill="#f7e1ad"/>
+                    <rect x="10" y="18" width="4" height="5" fill="#7a522e"/>
+                    <rect x="18" y="18" width="4" height="5" fill="#7a522e"/>
+                    <rect x="10" y="23" width="1" height="1" fill="#111111"/>
+                    <rect x="12" y="23" width="1" height="1" fill="#111111"/>
+                    <rect x="19" y="23" width="1" height="1" fill="#111111"/>
+                    <rect x="21" y="23" width="1" height="1" fill="#111111"/>
+                </svg>
+            </div>
+            <div class="status-text" id="p1-status">ボタンを押して準備</div>
+            <div class="result-detail" id="p1-detail"></div>
+        </div>
+
+        <div class="bottom-controls">
+            <div class="control-group">
+                <button class="icon-btn" onclick="openStartOverlay(); event.stopPropagation();" title="リセット">↺</button>
+                <div class="score-icons" id="p1-score-icons">
+                    <span class="star-icon">🥭</span>
+                    <span class="star-icon">🥭</span>
+                    <span class="star-icon">🥭</span>
+                </div>
+            </div>
+            <button class="action-btn" id="p1-btn" data-player="1">開始</button>
+            <button class="icon-btn" onclick="toggleModal(); event.stopPropagation();">?</button>
+        </div>
+    </div>
+
+    <footer class="game-footer">マーモット1</footer>
+
+    <div id="modal" onclick="toggleModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3>奪え！マンゴー！</h3>
+            <p style="font-size: 13px; text-align: left; line-height: 1.6; color: #4a3324;">
+                現れては消える、極上の果実「マンゴー」。マーモットどもが息を潜めて待ち構える中、荒野に姿を現すのは甘い果実か、それとも罠か―― 一瞬の隙も許されない、最速の勝負が始まる。<br><br>
+                1. マンゴーが現れたら素早くタップ！相手より先に手に入れろ！<br>
+                2. あせりは禁物！手に入れたマンゴーを落としちまう！<br>
+                3. 片方がタップしてから2 秒以内に反撃しないと、その時点でラウンド終了！<br>
+                4. タマネギだけは絶対に避けろ！オレとの約束だ。
+            </p>
+            <button onclick="toggleModal()">閉じる</button>
+        </div>
+    </div>
+
+    <script>
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playClickSe() {
+            initAudio();
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(220, audioCtx.currentTime + 0.05);
+
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.06);
+            } catch(e) {}
+        }
+
+        function playStartSound() {
+            initAudio();
+            try {
+                const chordNotes = [293.66, 349.23, 440.00, 587.33];
+                chordNotes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    osc.type = 'triangle';
+                    const startTime = audioCtx.currentTime + idx * 0.08;
+                    
+                    osc.frequency.setValueAtTime(freq, startTime);
+
+                    gain.gain.setValueAtTime(0.0, startTime);
+                    gain.gain.linearRampToValueAtTime(0.12, startTime + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.45);
                 });
-                return { count, pickups, tenjo, countForFourStarRate, monthlyData, breakdown };
-            }, [records, statYear]);
+            } catch(e) {}
+        }
 
-            const skipRef = useRef(false);
-            const [simPhase, setSimPhase] = useState('idle');
-            const [diamonds, setDiamonds] = useState('300');
-            const [simTotalCount, setSimTotalCount] = useState(0);
-            const [simFiveStarPuCount, setSimFiveStarPuCount] = useState(0);
-            const [simFiveStarSurinukeCount, setSimFiveStarSurinukeCount] = useState(0);
-            const [simFourStarPuCount, setSimFourStarPuCount] = useState(0);
-            const [simFourStarSurinukeCount, setSimFourStarSurinukeCount] = useState(0);
-            const [currentStep, setCurrentStep] = useState(0);
-            const [simResults, setSimResults] = useState([]);
-            const [displayState, setDisplayState] = useState('gift');
-            const [giftEmoji, setGiftEmoji] = useState('🍄‍🟫');
-            const [isWobbling, setIsWobbling] = useState(false);
-            const [isRainbowEffect, setIsRainbowEffect] = useState(false);
-            const [currentItem, setCurrentItem] = useState(null);
-            const runSimulator11 = async () => {
-                const currentDiamonds = parseInt(diamonds) || 0;
-                if (currentDiamonds < 30) {
-                    alert('💎が足りません！');
+        function playGrabSound() {
+            initAudio();
+            try {
+                const bufferSize = audioCtx.sampleRate * 0.2;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(800, audioCtx.currentTime);
+                filter.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.2);
+
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                noise.start();
+            } catch(e) {}
+        }
+
+        function playVictorySound() {
+            initAudio();
+            try {
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.12);
+
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime + idx * 0.12);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.12 + 0.2);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(audioCtx.currentTime + idx * 0.12);
+                    osc.stop(audioCtx.currentTime + idx * 0.12 + 0.25);
+                });
+            } catch(e) {}
+        }
+
+        function playDefeatSound() {
+            initAudio();
+            try {
+                const notes = [300, 250, 200];
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.15);
+
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime + idx * 0.15);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.15 + 0.2);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(audioCtx.currentTime + idx * 0.15);
+                    osc.stop(audioCtx.currentTime + idx * 0.15 + 0.25);
+                });
+            } catch(e) {}
+        }
+
+        function playSadDefeatSound() {
+            initAudio();
+            try {
+                const notes = [293.66, 277.18, 246.94, 220.00];
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    const startTime = audioCtx.currentTime + idx * 0.18;
+                    
+                    osc.frequency.setValueAtTime(freq, startTime);
+                    osc.frequency.exponentialRampToValueAtTime(freq * 0.9, startTime + 0.25);
+
+                    gain.gain.setValueAtTime(0.2, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.35);
+                });
+            } catch(e) {}
+        }
+
+        function getVegetableSvg(type) {
+            switch(type) {
+                case 'mango':
+                    return `<svg viewBox="0 0 32 32" width="100%" height="100%" style="shape-rendering: crispEdges;">
+                        <rect x="14" y="5" width="4" height="3" fill="#3b220b"/>
+                        <rect x="16" y="4" width="2" height="2" fill="#2e7d32"/>
+                        
+                        <rect x="12" y="8" width="8" height="2" fill="#e53935"/>
+                        <rect x="10" y="10" width="12" height="3" fill="#e53935"/>
+                        <rect x="8" y="13" width="16" height="4" fill="#e53935"/>
+                        <rect x="8" y="17" width="16" height="4" fill="#ff9800"/>
+                        <rect x="9" y="21" width="14" height="3" fill="#ff9800"/>
+                        <rect x="11" y="24" width="10" height="2" fill="#9ccc65"/>
+
+                        <rect x="11" y="14" width="3" height="3" fill="#ffa726"/>
+                    </svg>`;
+                case 'apple':
+                    return `<svg viewBox="0 0 32 32" width="100%" height="100%" style="shape-rendering: crispEdges;">
+                        <rect x="15" y="6" width="2" height="2" fill="#5d4037"/>
+                        <rect x="17" y="5" width="3" height="2" fill="#8bc34a"/>
+                        
+                        <rect x="10" y="8" width="12" height="1" fill="#b71c1c"/>
+                        <rect x="9" y="9" width="14" height="2" fill="#c62828"/>
+                        <rect x="8" y="11" width="16" height="10" fill="#d32f2f"/>
+                        <rect x="9" y="21" width="14" height="2" fill="#c62828"/>
+                        <rect x="10" y="23" width="12" height="1" fill="#b71c1c"/>
+                        
+                        <rect x="11" y="13" width="5" height="3" fill="#ef5350"/>
+                        <rect x="12" y="14" width="2" height="2" fill="#ffffff"/>
+                        <rect x="18" y="15" width="2" height="1" fill="#ffcdd2"/>
+                    </svg>`;
+                case 'tamanegi':
+                    return `<svg viewBox="0 0 32 32" width="100%" height="100%" style="shape-rendering: crispEdges;">
+                        <rect x="14" y="4" width="4" height="4" fill="#27ae60"/>
+                        <rect x="13" y="8" width="6" height="2" fill="#d35400"/>
+                        <rect x="11" y="10" width="10" height="2" fill="#e67e22"/>
+                        <rect x="9" y="12" width="14" height="2" fill="#f39c12"/>
+                        <rect x="7" y="14" width="18" height="10" fill="#f39c12"/>
+                        <rect x="9" y="24" width="14" height="2" fill="#e67e22"/>
+                        <rect x="11" y="26" width="10" height="2" fill="#d35400"/>
+                        
+                        <rect x="9" y="14" width="14" height="10" fill="#f5b041"/>
+                        <rect x="12" y="16" width="6" height="4" fill="#fcf3cf" opacity="0.6"/>
+                    </svg>`;
+                default:
+                    return '';
+            }
+        }
+
+        let gameState = 'IDLE';
+        let p1Ready = false;
+        let p2Ready = false;
+        let timeoutIds = [];
+        let startTime = 0;
+        let p1Wins = 0;
+        let p2Wins = 0;
+
+        let p1Tapped = false;
+        let p2Tapped = false;
+        let p1Time = null;
+        let p2Time = null;
+        let currentVegetableType = '';
+        let firstTapTimer = null; // 2 秒以内の待機タイマー
+
+        const p1Status = document.getElementById('p1-status');
+        const p2Status = document.getElementById('p2-status');
+        const p1Detail = document.getElementById('p1-detail');
+        const p2Detail = document.getElementById('p2-detail');
+        const p1Btn = document.getElementById('p1-btn');
+        const p2Btn = document.getElementById('p2-btn');
+        const p1Avatar = document.getElementById('p1-avatar');
+        const p2Avatar = document.getElementById('p2-avatar');
+        const p1Flash = document.getElementById('p1-flash');
+        const p2Flash = document.getElementById('p2-flash');
+        const globalCenterStage = document.getElementById('global-center-stage');
+        const startOverlay = document.getElementById('start-overlay');
+        const overlayTitle = document.getElementById('overlay-title');
+        const overlaySub = document.getElementById('overlay-sub');
+        const overlayBtn = document.getElementById('overlay-btn');
+
+        document.querySelectorAll('.player-side').forEach(side => {
+            const playerNum = parseInt(side.getAttribute('data-player'));
+            side.addEventListener('pointerdown', (e) => {
+                if (e.target.tagName === 'BUTTON') return;
+                handleTap(playerNum);
+            });
+        });
+
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            const playerNum = parseInt(btn.getAttribute('data-player'));
+            btn.addEventListener('pointerdown', (e) => {
+                e.stopPropagation();
+                handleButton(playerNum);
+            });
+        });
+
+        function updateScoreIcons() {
+            const p1Stars = document.querySelectorAll('#p1-score-icons .star-icon');
+            p1Stars.forEach((star, idx) => {
+                if (idx < p1Wins) star.classList.add('won');
+                else star.classList.remove('won');
+            });
+
+            const p2Stars = document.querySelectorAll('#p2-score-icons .star-icon');
+            p2Stars.forEach((star, idx) => {
+                if (idx < p2Wins) star.classList.add('won');
+                else star.classList.remove('won');
+            });
+        }
+
+        function clearAllTimeouts() {
+            timeoutIds.forEach(id => clearTimeout(id));
+            timeoutIds = [];
+            if (firstTapTimer) {
+                clearTimeout(firstTapTimer);
+                firstTapTimer = null;
+            }
+        }
+
+        function triggerFlash(playerNum) {
+            const flash = playerNum === 1 ? p1Flash : p2Flash;
+            flash.classList.add('flash-active');
+            setTimeout(() => {
+                flash.classList.remove('flash-active');
+            }, 120);
+        }
+
+        function triggerHitEffect(opponentNum) {
+            const avatar = opponentNum === 1 ? p1Avatar : p2Avatar;
+            avatar.classList.add('hit-effect');
+            setTimeout(() => {
+                avatar.classList.remove('hit-effect');
+            }, 350);
+        }
+
+        function setCenterObject(type) {
+            currentVegetableType = type;
+            globalCenterStage.innerHTML = getVegetableSvg(type);
+        }
+
+        function clearCenterObject() {
+            currentVegetableType = '';
+            globalCenterStage.innerHTML = '';
+        }
+
+        function openStartOverlay(targetPlayer = 1) {
+            clearAllTimeouts();
+            gameState = 'IDLE';
+            startOverlay.classList.remove('orient-p1', 'orient-p2');
+            startOverlay.classList.add(targetPlayer === 2 ? 'orient-p2' : 'orient-p1');
+            overlayTitle.textContent = '奪え！マンゴー！';
+            overlaySub.textContent = '';
+            overlayBtn.textContent = 'ゲームスタート';
+            startOverlay.classList.remove('hidden');
+        }
+
+        function triggerMainGameStart() {
+            playClickSe();
+            startOverlay.classList.add('hidden');
+            resetGame();
+        }
+
+        function resetGame() {
+            clearAllTimeouts();
+            clearCenterObject();
+            gameState = 'IDLE';
+            p1Ready = false;
+            p2Ready = false;
+            p1Wins = 0;
+            p2Wins = 0;
+            updateScoreIcons();
+
+            p1Avatar.classList.remove('shoot', 'dead', 'hit-effect', 'waiting-anim');
+            p2Avatar.classList.remove('shoot', 'dead', 'hit-effect', 'waiting-anim');
+
+            p1Status.textContent = 'ボタンを押して準備';
+            p2Status.textContent = 'ボタンを押して準備';
+            p1Detail.textContent = '';
+            p2Detail.textContent = '';
+
+            p1Btn.disabled = false;
+            p2Btn.disabled = false;
+            p1Btn.textContent = '開始';
+            p2Btn.textContent = '開始';
+            p1Btn.classList.remove('ready-state');
+            p2Btn.classList.remove('ready-state');
+        }
+
+        function handleButton(playerNum) {
+            playClickSe();
+            if (gameState === 'IDLE' || gameState === 'FINISHED') {
+                if (playerNum === 1) {
+                    p1Ready = true;
+                    p1Btn.textContent = '準備完了';
+                    p1Btn.classList.add('ready-state');
+                    p1Status.textContent = '相手の準備待ち...';
+                } else {
+                    p2Ready = true;
+                    p2Btn.textContent = '準備完了';
+                    p2Btn.classList.add('ready-state');
+                    p2Status.textContent = '相手の準備待ち...';
+                }
+
+                if (p1Ready && p2Ready) {
+                    startDuelSequence();
+                }
+            }
+        }
+
+        function startDuelSequence() {
+            gameState = 'WAITING';
+            p1Ready = false;
+            p2Ready = false;
+            p1Tapped = false;
+            p2Tapped = false;
+            p1Time = null;
+            p2Time = null;
+            clearCenterObject();
+
+            p1Avatar.classList.remove('shoot', 'dead', 'hit-effect');
+            p2Avatar.classList.remove('shoot', 'dead', 'hit-effect');
+
+            p1Avatar.classList.add('waiting-anim');
+            p2Avatar.classList.add('waiting-anim');
+
+            p1Btn.disabled = true;
+            p2Btn.disabled = true;
+            p1Btn.classList.remove('ready-state');
+            p2Btn.classList.remove('ready-state');
+
+            p1Status.textContent = '';
+            p2Status.textContent = '';
+            p1Detail.textContent = '';
+            p2Detail.textContent = '';
+
+            clearAllTimeouts();
+            playStartSound();
+
+            const totalWins = p1Wins + p2Wins;
+            let maxFeints = Math.max(1, 4 - Math.floor(totalWins * 0.5));
+            let feintCount = Math.floor(Math.random() * (maxFeints + 1));
+
+            runFeintLoop(feintCount);
+        }
+
+        function runFeintLoop(remainingFeints) {
+            if (gameState !== 'WAITING') return;
+
+            const nextDelay = Math.random() * 500 + 700;
+
+            timeoutIds.push(setTimeout(() => {
+                if (gameState !== 'WAITING') return;
+
+                if (remainingFeints > 0) {
+                    const feintTypes = ['apple', 'tamanegi'];
+                    const selectedFeintVeg = feintTypes[Math.floor(Math.random() * feintTypes.length)];
+
+                    setCenterObject(selectedFeintVeg);
+
+                    const hideTime = Math.random() * 800 + 1200;
+                    timeoutIds.push(setTimeout(() => {
+                        if (gameState !== 'WAITING') return;
+                        
+                        clearCenterObject();
+
+                        const pauseTime = Math.random() * 500 + 600;
+                        timeoutIds.push(setTimeout(() => {
+                            if (gameState !== 'WAITING') return;
+                            runFeintLoop(remainingFeints - 1);
+                        }, pauseTime));
+
+                    }, hideTime));
+
+                } else {
+                    // マンゴー出現前の間を他のフェイント野菜と同じペースに統一
+                    const realTime = Math.random() * 500 + 700;
+                    timeoutIds.push(setTimeout(() => {
+                        triggerMango();
+                    }, realTime));
+                }
+
+            }, nextDelay));
+        }
+
+        function triggerMango() {
+            if (gameState !== 'WAITING') return;
+            gameState = 'READY';
+            setCenterObject('mango');
+            startTime = performance.now();
+        }
+
+        function handleTap(playerNum) {
+            if (gameState === 'WAITING') {
+                const veg = currentVegetableType;
+                const isInstantDeath = (veg === 'tamanegi');
+
+                p1Avatar.classList.remove('waiting-anim');
+                p2Avatar.classList.remove('waiting-anim');
+
+                if (isInstantDeath) {
+                    clearAllTimeouts();
+                    gameState = 'FINISHED';
+                    playSadDefeatSound();
+                    playGrabSound();
+                    triggerFlash(playerNum);
+                    const opponentNum = playerNum === 1 ? 2 : 1;
+                    triggerHitEffect(opponentNum);
+
+                    const deathMessages = {
+                        'tamanegi': '💀タマネギを食べてしまった…'
+                    };
+
+                    if (playerNum === 1) {
+                        p1Tapped = true;
+                        p1Avatar.classList.add('dead');
+                        p2Avatar.classList.add('shoot');
+                        p1Status.textContent = '';
+                        p2Status.textContent = '';
+                        p1Detail.textContent = 'うぐっ…';
+                        p2Detail.textContent = 'なんてこったい';
+                        
+                        triggerGameOver(2, deathMessages[veg], 1, playerNum);
+                    } else {
+                        p2Tapped = true;
+                        p2Avatar.classList.add('dead');
+                        p1Avatar.classList.add('shoot');
+                        p2Status.textContent = '';
+                        p1Status.textContent = '';
+                        p2Detail.textContent = 'うぐっ…';
+                        p1Detail.textContent = 'なんこったい';
+                        
+                        triggerGameOver(1, deathMessages[veg], 2, playerNum);
+                    }
+                    return;
+                } else {
+                    clearAllTimeouts();
+                    gameState = 'FINISHED';
+                    playDefeatSound();
+                    playGrabSound();
+                    triggerFlash(playerNum);
+                    const opponentNum = playerNum === 1 ? 2 : 1;
+                    triggerHitEffect(opponentNum);
+
+                    if (playerNum === 1) {
+                        p1Tapped = true;
+                        p1Avatar.classList.add('dead');
+                        p2Avatar.classList.add('shoot');
+                        p1Status.textContent = '';
+                        p2Status.textContent = '';
+                        p1Detail.textContent = 'ミス（🥭-1）';
+                        p2Detail.textContent = 'セーフ';
+                        p1Wins = Math.max(0, p1Wins - 1);
+                    } else {
+                        p2Tapped = true;
+                        p2Avatar.classList.add('dead');
+                        p1Avatar.classList.add('shoot');
+                        p2Status.textContent = '';
+                        p1Status.textContent = '';
+                        p2Detail.textContent = 'ミス（🥭-1）';
+                        p1Detail.textContent = 'セーフ';
+                        p2Wins = Math.max(0, p2Wins - 1);
+                    }
+                    updateScoreIcons();
+                    checkMatchEnd();
                     return;
                 }
-                setDiamonds((currentDiamonds - 30).toString());
-                setSimPhase('animating');
-                setSimResults([]); skipRef.current = false;
-                let draws = [];
-                for (let i = 0; i < 11; i++) {
-                    const r = Math.random() * 100;
-                    const randShow = Math.random();
-                    let item = ITEM_E;
-                    let pattern = 1;
-                    if (r < 0.8) { item = ITEM_A;
-                    if (randShow < 0.3) pattern = 4; else if (randShow < 0.65) pattern = 3; else pattern = 2;
-                    }
-                    else if (r < 1.0) { item = ITEM_B;
-                    if (randShow < 0.3) pattern = 4; else if (randShow < 0.65) pattern = 3; else pattern = 2;
-                    }
-                    else if (r < 3.1) { item = ITEM_C;
-                    pattern = randShow < 0.5 ? 2 : 3; }
-                    else if (r < 4.0) { item = ITEM_D;
-                    pattern = randShow < 0.5 ? 2 : 3; }
-                    else { item = ITEM_E;
-                    pattern = 1; }
-                    draws.push({ config: { pattern }, item });
-                }
-                const wait = async (ms) => {
-                    let elapsed = 0;
-                    while(elapsed < ms) {
-                        if (skipRef.current) return;
-                        await new Promise(r => setTimeout(r, 50));
-                        elapsed += 50;
-                    }
-                };
-                for (let stepIndex = 0; stepIndex < 11; stepIndex++) {
-                    if (skipRef.current) {
-                        setIsRainbowEffect(false);
-                        setIsWobbling(false);
-                        const nextImportantIndex = draws.findIndex((d, idx) => idx >= stepIndex && [2, 3, 4].includes(d.config.pattern));
-                        if (nextImportantIndex === -1) {
-                            const remainingItems = draws.slice(stepIndex).map(d => d.item);
-                            setSimResults(prev => [...prev, ...remainingItems]);
-                            break;
-                        } else {
-                            const itemsToAdd = draws.slice(stepIndex, nextImportantIndex).map(d => d.item);
-                            setSimResults(prev => [...prev, ...itemsToAdd]);
-                            stepIndex = nextImportantIndex - 1;
-                            skipRef.current = false;
-                            continue;
-                        }
-                    }
-                    const { config, item } = draws[stepIndex];
-                    setCurrentStep(stepIndex + 1); setDisplayState('gift'); setGiftEmoji('🍄‍🟫'); setIsWobbling(false); setIsRainbowEffect(false);
-                    if (config.pattern === 1) {
-                        setGiftEmoji('🍄‍🟫');
-                        await wait(300); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
-                        }
-                        setIsWobbling(true);
-                        await wait(800);
-                    } else if (config.pattern === 2) {
-                        setGiftEmoji('🍄‍🟫');
-                        await wait(300); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
-                        }
-                        setIsWobbling(true);
-                        await wait(800); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
-                        }
-                        setIsWobbling(false);
-                        await wait(1000);
-                    } else if (config.pattern === 3) {
-                        setGiftEmoji('🍆');
-                        await wait(300); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
-                        }
-                        setIsWobbling(true);
-                        await wait(800); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
-                        }
-                        setIsWobbling(false);
-                        await wait(1000);
-                    } else if (config.pattern === 4) {
-                        setGiftEmoji('🌑');
-                        setIsRainbowEffect(true);
-                        await wait(1500); if(skipRef.current) { setIsRainbowEffect(false); setIsWobbling(false); setSimResults(prev => [...prev, item]); continue;
-                        }
-                        setIsRainbowEffect(false);
-                    }
-                    if(skipRef.current) { setIsRainbowEffect(false);
-                    setIsWobbling(false); setSimResults(prev => [...prev, item]); continue; }
-                    setIsWobbling(false);
-                    await wait(300);
-                    if(skipRef.current) { setIsRainbowEffect(false); setSimResults(prev => [...prev, item]); continue;
-                    }
-                    setDisplayState('item');
-                    setCurrentItem(item); setSimResults(prev => [...prev, item]);
-                    await wait(500);
-                }
-                setIsRainbowEffect(false);
-                setIsWobbling(false);
-                setSimPhase('result');
-                setSimTotalCount(prev => prev + 11);
-                let fiveStarPu = 0; let fiveStarSurinuke = 0; let fourStarPu = 0;
-                let fourStarSurinuke = 0;
-                draws.forEach(d => {
-                    if (d.item.id === 'a') fiveStarPu++;
-                    if (d.item.id === 'b') fiveStarSurinuke++;
-                    if (d.item.id === 'c') fourStarPu++;
-                    if (d.item.id === 'd') fourStarSurinuke++;
-                });
-                setSimFiveStarPuCount(prev => prev + fiveStarPu);
-                setSimFiveStarSurinukeCount(prev => prev + fiveStarSurinuke);
-                setSimFourStarPuCount(prev => prev + fourStarPu);
-                setSimFourStarSurinukeCount(prev => prev + fourStarSurinuke);
-            };
 
-            return (
-                <div className="min-h-screen flex flex-col max-w-4xl mx-auto p-4 md:py-8">
-                    <header className="bg-white rounded-2xl p-5 shadow-sm mb-4 border border-blue-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <h1 className="text-xl font-bold text-slate-900">FGOガチャ備忘録</h1>
-                        <div className="flex flex-wrap gap-2 justify-center">
-                            <button onClick={handleCopyToClipboard} className="px-3 py-2 rounded-xl text-sm font-bold bg-slate-800 text-white hover:bg-slate-900 transition">📋 コピー</button>
-                            <button onClick={handleExport} className="px-3 py-2 text-sm font-bold bg-green-600 text-white rounded-xl hover:bg-green-700 transition">📥 保存</button>
-                            <label className="px-3 py-2 text-sm font-bold bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition cursor-pointer">📤 復元
-                                <input type="file" accept=".json" onChange={handleImport} className="hidden" />
-                            </label>
-                        </div>
-                    </header>
-                    <div className="bg-white p-1.5 rounded-xl shadow-sm border border-blue-100 flex gap-2 mb-6">
-                        {['memory', 'stats', 'simulator'].map(tab => (
-                            <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-3 rounded-lg font-bold text-sm transition ${activeTab === tab ? 'bg-blue-500 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>
-                                {tab === 'memory' ? '📖 記録' : tab === 'stats' ? '🏆 実績' : 'ガチャ'}
-                            </button>
-                        ))}
-                    </div>
-                    <main className="flex-1">
-                        {activeTab === 'memory' && (
-                            <div className="space-y-6">
-                                <details className="bg-white rounded-2xl shadow-sm border border-blue-100 group" open={!!editingId}>
-                                    <summary className="p-6 font-bold text-lg text-slate-800 cursor-pointer list-none flex justify-between items-center select-none">
-                                        <h2 className="text-lg font-bold text-slate-800 border-l-4 border-blue-500 pl-2">📝 {editingId ? '記録を編集' : '記録を新規追加'}</h2>
-                                        <span className="text-sm text-blue-500 group-open:rotate-180 transition-transform">▼</span>
-                                    </summary>
-                                    <form onSubmit={handleSaveRecord} className="p-6 pt-0 space-y-5">
-                                        <div className="flex gap-4">
-                                            <div>
-                                                <label className="block text-xs font-bold text-slate-600 mb-1">日付</label>
-                                                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-28 sm:w-32 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus:outline-none" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <label className="block text-xs font-bold text-slate-600 mb-1">PU鯖 *</label>
-                                                <input type="text" value={puSaba} onChange={(e) => setPuSaba(e.target.value)} required className="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus:outline-none" />
-                                            </div>
-                                        </div>
-                                        <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
-                                            <label className="block text-xs font-bold text-slate-700 mb-2">計算用</label>
-                                            <div className="flex flex-col gap-3">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="flex items-center gap-2"><span className="text-xs text-slate-500">単発:</span><input type="number" value={countA} onChange={(e) => setCountA(e.target.value)} className="w-16 border rounded-lg px-2 py-1 text-center bg-white" /></div>
-                                                    <div className="flex items-center gap-2"><span className="text-xs text-slate-500">11連:</span><input type="number" value={countB} onChange={(e) => setCountB(e.target.value)} className="w-16 border rounded-lg px-2 py-1 text-center bg-white" /></div>
-                                                </div>
-                                                <div className="text-sm font-bold pt-1 border-t border-blue-100/30">合計: <span className="text-xl text-blue-600">{totalCount}</span> 連</div>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-4 items-center">
-                                            <div>
-                                                <label className="block text-xs font-bold text-slate-600 mb-1">天井した回数</label>
-                                                <select value={tenjo} onChange={(e) => setTenjo(e.target.value)} className="w-20 border border-slate-200 rounded-lg px-2 py-1 bg-slate-50 text-sm">
-                                                    {[0, 1, 2, 3, 4, 5].map(num => (<option key={num} value={num}>{num}</option>))}
-                                                </select>
-                                            </div>
-                                            <label className="flex items-center gap-1.5 cursor-pointer mt-5">
-                                                <input type="checkbox" checked={isNoFourStarPU} onChange={(e) => setIsNoFourStarPU(e.target.checked)} className="w-5 h-5 rounded border-slate-300" />
-                                                <span className="text-sm font-bold text-slate-600 whitespace-nowrap">星4PUなし</span>
-                                            </label>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="block text-xs font-bold text-slate-600">ガチャ結果</label>
-                                            {shoukanList.map((shoukan, index) => (
-                                                <div key={index} className="flex items-center gap-1.5 flex-nowrap mb-2">
-                                                    <select value={shoukan.type || '星5PU'} onChange={(e) => updateShoukanSaba(index, 'type', e.target.value)} className="border border-slate-200 rounded-lg px-1 py-1 bg-white text-sm shrink-0">
-                                                        <option value="星5PU">星5PU</option>
-                                                        <option value="星5他">星5他</option>
-                                                        <option value="星4PU">星4PU</option>
-                                                        <option value="その他">その他</option>
-                                                        <option value="特殊">特殊</option>
-                                                    </select>
-                                                    <input type="text" placeholder="召喚した鯖名" value={shoukan.name} onChange={(e) => updateShoukanSaba(index, 'name', e.target.value)} className="flex-1 min-w-[80px] border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-sm" />
-                                                    <input type="number" value={shoukan.count} onChange={(e) => updateShoukanSaba(index, 'count', e.target.value)} placeholder="1" className="w-10 border border-slate-200 rounded-lg px-1 py-1.5 text-center bg-white text-sm shrink-0" />
-                                                    {shoukanList.length > 1 && (
-                                                        <button type="button" onClick={() => setShoukanList(shoukanList.filter((_, i) => i !== index))} className="text-rose-500 font-bold px-2 py-1 hover:bg-rose-50 rounded-lg transition shrink-0">✕</button>
-                                                    )}
-                                                </div>
-                                            ))}
-                                            <button type="button" onClick={() => setShoukanList([...shoukanList, { name: '', count: '', type: '星5PU' }])} className="text-xs font-bold text-blue-600 mt-2 block">＋ 鯖を追加</button>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-600 mb-1">備考</label>
-                                            <textarea value={bikou} onChange={(e) => setBikou(e.target.value)} rows="1" className="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50" />
-                                        </div>
-                                        <div className="flex gap-2 pt-2">
-                                            <button type="submit" className="flex-1 bg-blue-500 text-white font-bold py-3 rounded-xl hover:bg-blue-600">{editingId ? '変更を保存' : '記録する'}</button>
-                                            {editingId && <button type="button" onClick={() => setEditingId(null)} className="bg-slate-200 px-4 rounded-xl font-bold">キャンセル</button>}
-                                        </div>
-                                    </form>
-                                </details>
-                                <div className="bg-white p-4 rounded-2xl shadow-sm border border-blue-100 flex flex-col gap-3">
-                                    <input type="text" placeholder="🔍 検索 (PU鯖名・結果・備考)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50" />
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex-1">
-                                            <select value={searchYear} onChange={(e) => setSearchYear(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 text-sm">
-                                                <option value="all">全期間</option>
-                                                {availableYears.map(y => <option key={y} value={y}>{y}年</option>)}
-                                            </select>
-                                        </div>
-                                        <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-600 font-bold whitespace-nowrap">
-                                            <input type="checkbox" checked={onlyTenjo} onChange={(e) => setOnlyTenjo(e.target.checked)} className="w-4 h-4 rounded border-slate-300" />
-                                            天井のみ表示
-                                        </label>
-                                    </div>
-                                </div>
-                                <div className="space-y-4">
-                                    <h2 className="text-lg font-bold text-slate-800">履歴</h2>
-                                    {filteredRecords.map((rec) => (
-                                        <div key={rec.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative">
-                                            <div className="absolute top-4 right-4 flex gap-2">
-                                                <button onClick={() => handleEditClick(rec)} className="px-3 py-1 text-xs font-bold bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100">編集</button>
-                                                <button onClick={() => handleDeleteRecord(rec.id)} className="px-3 py-1 text-xs font-bold bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100">削除</button>
-                                            </div>
-                                            <div className="font-bold text-slate-800">{rec.puSaba} <span className="text-xs text-slate-400 ml-2">{rec.date}</span></div>
-                                            <div className="text-xs text-slate-600 mt-2">合計: {rec.totalCount}連 {rec.tenjo ? ` | 天井: ${rec.tenjo}回` : ''} {rec.isNoFourStarPU ? '(星4PUなし)' : ''}</div>
-                                            {rec.shoukanList.length > 0 && (
-                                                <div className="mt-2 text-sm text-slate-700 flex flex-wrap gap-2">
-                                                    {rec.shoukanList.map((s, i) => (
-                                                        <span key={i} className="text-xs border px-2 py-1 rounded inline-block">
-                                                            {s.type || '不明'} {s.name} ✕ {s.count}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            )}
-                                            {rec.bikou && <div className="mt-2 text-xs text-slate-500 bg-slate-50 p-2 rounded">{rec.bikou}</div>}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                        {activeTab === 'stats' && (
-                            <div className="space-y-6">
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-blue-100">
-                                    <h2 className="text-lg font-bold mb-4 text-center">🏆 実績集計</h2>
-                                    <select value={statYear} onChange={(e) => setStatYear(e.target.value)} className="border p-2 rounded-lg mb-4 bg-slate-50 w-full text-center">
-                                        <option value="all">全期間</option>
-                                        {availableYears.map(y => <option key={y} value={y}>{y}年</option>)}
-                                    </select>
-                                    <div className="space-y-4">
-                                        <div className="p-4 bg-blue-50 rounded-xl text-center">
-                                            <h3 className="font-bold text-blue-800 mb-3">{statYear === 'all' ? '期間合計' : `${statYear}年合計`}</h3>
-                                            <div className="text-4xl mb-2 font-bold">{stats.count}連</div>
-                                            <div className="flex flex-col sm:flex-row sm:justify-center items-center gap-2 sm:gap-6 text-sm">
-                                                <div className="font-bold text-emerald-600">星5PU: {stats.breakdown['星5PU']}騎({stats.count > 0 ? ((stats.breakdown['星5PU'] / stats.count) * 100).toFixed(2) : 0}%)</div>
-                                                <div className="text-slate-600 font-medium">星5他: {stats.breakdown['星5他']}騎({stats.count > 0 ? ((stats.breakdown['星5他'] / stats.count) * 100).toFixed(2) : 0}%)</div>
-                                                <div className="font-bold text-blue-600">星4PU: {stats.breakdown['星4PU']}騎({stats.countForFourStarRate > 0 ? ((stats.breakdown['星4PU'] / stats.countForFourStarRate) * 100).toFixed(2) : 0}%)</div>
-                                                <div className="font-bold text-purple-600">特殊: {stats.breakdown['特殊']}騎</div>
-                                            </div>
-                                            <div className="text-sm font-bold text-slate-700 mt-4 pt-4 border-t text-center">天井: {stats.tenjo}回</div>
-                                        </div>
-                                        {statYear !== 'all' && (
-                                            <div className="border-t pt-4">
-                                                <h3 className="font-bold mb-2">月別</h3>
-                                                {Object.keys(stats.monthlyData).sort().reverse().map(month => (
-                                                    <div key={month} className="flex justify-between py-2 border-b text-sm">
-                                                        <span>{month}</span>
-                                                        <span>{stats.monthlyData[month].count}連 ({stats.monthlyData[month].count > 0 ? ((stats.monthlyData[month].pickups / stats.monthlyData[month].count) * 100).toFixed(1) : 0}%)</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        {activeTab === 'simulator' && (
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-blue-100 text-center space-y-6">
-                                <div className="flex items-center gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200 text-left">
-                                    <span className="text-sm font-bold text-slate-700">💎所持数：</span>
-                                    <input type="number" value={diamonds} onChange={(e) => setDiamonds(e.target.value)} placeholder="0" className="w-24 border border-slate-200 rounded-lg px-2 py-1 text-center font-bold text-slate-800 bg-white" />
-                                    <span className="text-xs text-slate-500">個</span>
-                                </div>
-                                <div className="relative min-h-[240px] bg-gradient-to-b from-blue-50/20 to-indigo-50/40 rounded-2xl border flex flex-col items-center justify-center p-4">
-                                    <div className="h-6">
-                                        {simPhase === 'animating' && <span className="font-bold text-xs bg-blue-500 text-white px-3 py-1 rounded-full">進行中: {currentStep} / 11 回目</span>}
-                                    </div>
-                                    <div className="w-full h-32 flex flex-col items-center justify-center relative my-2">
-                                        {isRainbowEffect && <div className="absolute w-36 h-36 rounded-full bg-gradient-to-tr from-red-500 via-green-500 to-blue-500 opacity-40 blur-md animate-rainbow" />}
-                                        {simPhase === 'animating' && (
-                                            <div className="h-24 flex items-center justify-center z-10">
-                                                {displayState === 'gift' ? (
-                                                    <div className="relative flex items-center justify-center">
-                                                        <div className={`text-6xl z-10 ${isWobbling ? 'animate-wobble' : ''}`}>{giftEmoji}</div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-7xl animate-jojo">{currentItem?.emoji}</div>
-                                                )}
-                                            </div>
-                                        )}
-                                        {simPhase === 'result' && (
-                                            <div className="flex flex-wrap justify-center items-center gap-2 w-full max-w-[280px] mx-auto animate-fade-in-group">
-                                                {simResults.map((item, i) => (
-                                                    <div key={i} className="w-[calc(25%-8px)] bg-white border p-1.5 rounded-lg flex flex-col items-center shadow-sm animate-fade-in-item" style={{ animationDelay: `${0.05 + (i * 0.15)}s` }}>
-                                                        <div className="text-xl">{item.emoji}</div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="space-y-4 flex flex-col items-center">
-                                    <button onClick={runSimulator11} disabled={simPhase === 'animating'} className={`px-8 py-3.5 rounded-xl font-bold text-white shadow-md ${simPhase === 'animating' ? 'bg-slate-300' : 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:scale-95 transition'}`}>11回ガチャを回す</button>
-                                    {simPhase === 'animating' && (
-                                        <button onClick={() => { skipRef.current = true; }} className="px-6 py-2 rounded-full font-bold text-sm bg-slate-700 text-white shadow hover:bg-slate-800 transition">⏩ スキップ</button>
-                                    )}
-                                    <div className="w-full max-w-md border-t pt-4 mt-2 text-left space-y-3">
-                                        <h3 className="text-sm font-bold text-slate-700">📊 ガチャ結果</h3>
-                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 grid grid-cols-5 gap-1 text-center text-[10px]">
-                                            <div>
-                                                <div className="text-slate-500 mb-0.5 font-medium">合計</div>
-                                                <div className="text-sm font-bold text-slate-800">{simTotalCount}<span className="text-[9px] font-normal text-slate-500 ml-0.5">連</span></div>
-                                            </div>
-                                            <div>
-                                                <div className="text-slate-500 mb-0.5 font-medium">🌏 星5PU</div>
-                                                <div className="text-sm font-bold text-emerald-600">{simFiveStarPuCount}<span className="text-[9px] font-normal text-slate-500 ml-0.5">騎</span></div>
-                                                <div className="text-[9px] text-slate-400">({simTotalCount > 0 ? ((simFiveStarPuCount / simTotalCount) * 100).toFixed(2) : '0.00'}%)</div>
-                                            </div>
-                                            <div>
-                                                <div className="text-slate-500 mb-0.5 font-medium">🌕 星5すり</div>
-                                                <div className="text-sm font-bold text-amber-600">{simFiveStarSurinukeCount}<span className="text-[9px] font-normal text-slate-500 ml-0.5">騎</span></div>
-                                                <div className="text-[9px] text-slate-400">({simTotalCount > 0 ? ((simFiveStarSurinukeCount / simTotalCount) * 100).toFixed(2) : '0.00'}%)</div>
-                                            </div>
-                                            <div>
-                                                <div className="text-slate-500 mb-0.5 font-medium">🐓 星4PU</div>
-                                                <div className="text-sm font-bold text-blue-600">{simFourStarPuCount}<span className="text-[9px] font-normal text-slate-500 ml-0.5">騎</span></div>
-                                                <div className="text-[9px] text-slate-400">({simTotalCount > 0 ? ((simFourStarPuCount / simTotalCount) * 100).toFixed(2) : '0.00'}%)</div>
-                                            </div>
-                                            <div>
-                                                <div className="text-slate-500 mb-0.5 font-medium">🐣 星4すり</div>
-                                                <div className="text-sm font-bold text-indigo-600">{simFourStarSurinukeCount}<span className="text-[9px] font-normal text-slate-500 ml-0.5">騎</span></div>
-                                                <div className="text-[9px] text-slate-400">({simTotalCount > 0 ? ((simFourStarSurinukeCount / simTotalCount) * 100).toFixed(2) : '0.00'}%)</div>
-                                            </div>
-                                        </div>
-                                        <div className="text-center">
-                                            <button onClick={() => { setSimTotalCount(0); setSimFiveStarPuCount(0); setSimFiveStarSurinukeCount(0); setSimFourStarPuCount(0); setSimFourStarSurinukeCount(0); }} className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-lg transition">🔄 リセット</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </main>
-                </div>
-            );
+            } else if (gameState === 'READY') {
+                p1Avatar.classList.remove('waiting-anim');
+                p2Avatar.classList.remove('waiting-anim');
+
+                const tapDuration = (performance.now() - startTime) / 1000;
+                playGrabSound();
+                triggerFlash(playerNum);
+
+                const opponentNum = playerNum === 1 ? 2 : 1;
+                triggerHitEffect(opponentNum);
+
+                if (playerNum === 1 && !p1Tapped) {
+                    p1Tapped = true;
+                    p1Time = tapDuration;
+                    p1Avatar.classList.add('shoot');
+                    p1Detail.textContent = `タイム: ${p1Time.toFixed(3)} 秒`;
+                    p1Status.textContent = '';
+                } else if (playerNum === 2 && !p2Tapped) {
+                    p2Tapped = true;
+                    p2Time = tapDuration;
+                    p2Avatar.classList.add('shoot');
+                    p2Detail.textContent = `タイム: ${p2Time.toFixed(3)} 秒`;
+                    p2Status.textContent = '';
+                }
+
+                // 最初のプレイヤーがタップした瞬間の処理
+                if ((p1Tapped && !p2Tapped) || (!p1Tapped && p2Tapped)) {
+                    if (!firstTapTimer) {
+                        const firstPlayer = p1Tapped ? 1 : 2;
+                        // 2 秒間もう片方がタップしなければ、その時点でラウンド決着
+                        firstTapTimer = setTimeout(() => {
+                            if (gameState === 'READY') {
+                                finalizeRoundByTimeout(firstPlayer);
+                            }
+                        }, 2000);
+                    }
+                }
+
+                if (p1Tapped && p2Tapped) {
+                    if (firstTapTimer) {
+                        clearTimeout(firstTapTimer);
+                        firstTapTimer = null;
+                    }
+                    const delayWeight = 600; 
+                    setTimeout(finalizeRound, delayWeight);
+                }
+            }
         }
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render((<App />));
+
+        // 片方が2 秒以内にタップしなかった場合の終了処理
+        function finalizeRoundByTimeout(firstPlayer) {
+            if (gameState === 'FINISHED') return;
+            gameState = 'FINISHED';
+
+            p1Avatar.classList.remove('waiting-anim');
+            p2Avatar.classList.remove('waiting-anim');
+
+            if (firstPlayer === 1) {
+                p2Tapped = true;
+                p2Avatar.classList.add('dead');
+                p1Wins++;
+                p1Detail.textContent = `タイム: ${p1Time.toFixed(3)} 秒 (🥭+1)`;
+                p2Detail.textContent = '残念!';
+            } else {
+                p1Tapped = true;
+                p1Avatar.classList.add('dead');
+                p2Wins++;
+                p2Detail.textContent = `タイム: ${p2Time.toFixed(3)} 秒 (🥭+1)`;
+                p1Detail.textContent = '残念!';
+            }
+
+            updateScoreIcons();
+            playVictorySound();
+            checkMatchEnd();
+        }
+
+        function finalizeRound() {
+            if (gameState === 'FINISHED') return;
+            gameState = 'FINISHED';
+
+            if (firstTapTimer) {
+                clearTimeout(firstTapTimer);
+                firstTapTimer = null;
+            }
+
+            p1Avatar.classList.remove('waiting-anim');
+            p2Avatar.classList.remove('waiting-anim');
+
+            if (p1Time < p2Time) {
+                p1Status.textContent = '';
+                p2Status.textContent = '';
+                p2Avatar.classList.add('dead');
+                p1Wins++;
+                p1Detail.textContent = `タイム: ${p1Time.toFixed(3)} 秒 (🥭+1)`;
+                p2Detail.textContent = `タイム: ${p2Time.toFixed(3)} 秒`;
+                updateScoreIcons();
+                playVictorySound();
+            } else if (p2Time < p1Time) {
+                p2Status.textContent = '';
+                p1Status.textContent = '';
+                p1Avatar.classList.add('dead');
+                p2Wins++;
+                p2Detail.textContent = `タイム: ${p2Time.toFixed(3)} 秒 (🥭+1)`;
+                p1Detail.textContent = `タイム: ${p1Time.toFixed(3)} 秒`;
+                updateScoreIcons();
+                playVictorySound();
+            } else {
+                p1Status.textContent = '';
+                p2Status.textContent = '';
+                p1Detail.textContent = `タイム: ${p1Time.toFixed(3)} 秒`;
+                p2Detail.textContent = `タイム: ${p2Time.toFixed(3)} 秒`;
+            }
+
+            checkMatchEnd();
+        }
+
+        function triggerGameOver(winnerNum, messageText, loserNum, orientPlayer = null) {
+            gameState = 'MATCH_OVER';
+            p1Avatar.classList.remove('waiting-anim');
+            p2Avatar.classList.remove('waiting-anim');
+
+            p1Status.textContent = '';
+            p2Status.textContent = '';
+            playSadDefeatSound();
+            
+            const targetOrient = orientPlayer !== null ? orientPlayer : winnerNum;
+            startOverlay.classList.remove('orient-p1', 'orient-p2');
+            startOverlay.classList.add(targetOrient === 2 ? 'orient-p2' : 'orient-p1');
+
+            overlayTitle.textContent = messageText;
+            if (loserNum) {
+                overlaySub.textContent = `マーモット${loserNum}の敗北`;
+            } else {
+                overlaySub.textContent = '';
+            }
+            overlayBtn.textContent = 'もう一度プレイ';
+            
+            setTimeout(() => {
+                startOverlay.classList.remove('hidden');
+            }, 2000);
+        }
+
+        function checkMatchEnd() {
+            if (p1Wins >= 3 || p2Wins >= 3) {
+                gameState = 'MATCH_OVER';
+                p1Avatar.classList.remove('waiting-anim');
+                p2Avatar.classList.remove('waiting-anim');
+
+                p1Status.textContent = 'ネクスト';
+                p2Status.textContent = '';
+                playVictorySound();
+                
+                const winnerNum = p1Wins > p2Wins ? 1 : 2;
+                
+                startOverlay.classList.remove('orient-p1', 'orient-p2');
+                startOverlay.classList.add(winnerNum === 2 ? 'orient-p2' : 'orient-p1');
+
+                overlayTitle.textContent = p1Wins > p2Wins ? 'マーモット1の勝利！' : 'マーモット2の勝利！';
+                overlaySub.textContent = '';
+                overlayBtn.textContent = 'もう一度プレイ';
+                
+                setTimeout(() => {
+                    startOverlay.classList.remove('hidden');
+                }, 2000);
+            } else {
+                p1Ready = false;
+                p2Ready = false;
+                p1Btn.disabled = false;
+                p2Btn.disabled = false;
+                p1Btn.textContent = '次へ';
+                p2Btn.textContent = '次へ';
+                p1Btn.classList.remove('ready-state');
+                p2Btn.classList.remove('ready-state');
+            }
+        }
+
+        function toggleModal() {
+            const modal = document.getElementById('modal');
+            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        }
     </script>
 </body>
 </html>
