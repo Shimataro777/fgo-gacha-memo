@@ -1,1320 +1,1165 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>奪え！マンゴー！</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>FGOガチャ記録</title>
+<meta name="description" content="ガチャの結果を記録して、いつでも見返せる召喚のログ帳">
+<meta name="theme-color" content="#241a45">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ガチャ記録">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="manifest" href="./manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+:root{
+  --bg:#F4F1FB;
+  --surface:#FFFFFF;
+  --surface-alt:#FBF9FF;
+  --ink:#1E1B2E;
+  --ink-soft:#726C87;
+  --ink-faint:#A19CB5;
+  --border:#E8E2F6;
+  --brand:#5B3DF5;
+  --brand-strong:#4629D6;
+  --brand-deep:#241a45;
+  --brand-deep2:#3A2A72;
+  --gold:#B4790B;
+  --gold-glow:#FFC94A;
+  --gold-bg:#FFF6E1;
+  --gold-border:#F2DBA0;
+  --silver:#6E7686;
+  --silver-bg:#F0F1F5;
+  --silver-border:#DDE1E9;
+  --blue:#3457C9;
+  --blue-glow:#6EA0FF;
+  --blue-bg:#EDF1FF;
+  --blue-border:#CBD8FF;
+  --purple:#8A3FBF;
+  --purple-glow:#C77FFF;
+  --purple-bg:#FAF0FF;
+  --purple-border:#E9C9FA;
+  --grey:#80869A;
+  --grey-bg:#F2F2F6;
+  --danger:#C8395A;
+  --radius-lg:22px;
+  --radius-md:16px;
+  --radius-sm:11px;
+  --shadow-card:0 1px 2px rgba(30,20,60,.05),0 10px 26px -16px rgba(40,20,90,.28);
+  --shadow-pop:0 18px 48px -12px rgba(30,15,70,.45);
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*,::before,::after{box-sizing:border-box}
+html,body{height:100%}
+html{background:var(--brand-deep);scroll-padding-top:var(--safe-t)}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:'Noto Sans JP',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.55;
+  padding-top:var(--safe-t);
+}
+.disp{font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif}
+button{font:inherit;cursor:pointer;color:inherit;background:none;border:none;-webkit-tap-highlight-color:transparent}
+input,textarea,select{font:inherit;color:inherit}
+input,textarea,select{font-size:16px}
+img{display:block;max-width:100%}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#D8D0EE;border-radius:8px}
 
-        *, *::before, *::after {
-            box-sizing: border-box;
-        }
+/* layout */
+#root{min-height:100%;display:flex;flex-direction:column}
+.app-header{
+  background:linear-gradient(165deg,var(--brand-deep) 0%,var(--brand-deep2) 100%);
+  color:#fff;padding:18px 20px 20px;position:relative;overflow:hidden;
+}
+.app-header::before{
+  content:"";position:absolute;inset:0;opacity:.5;pointer-events:none;
+  background-image:radial-gradient(1.5px 1.5px at 12% 30%,#fff,transparent),
+    radial-gradient(1.5px 1.5px at 78% 20%,#fff,transparent),
+    radial-gradient(1px 1px at 55% 65%,#fff,transparent),
+    radial-gradient(1.5px 1.5px at 92% 70%,#fff,transparent),
+    radial-gradient(1px 1px at 30% 80%,#fff,transparent),
+    radial-gradient(1px 1px at 8% 60%,#fff,transparent);
+}
+.app-header-row{position:relative;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.app-title{font-size:19px;font-weight:900;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+.app-title .mark{
+  width:26px;height:26px;border-radius:50%;border:2.5px solid #fff;position:relative;flex:none;
+}
+.app-title .mark::after{content:"";position:absolute;left:-2.5px;right:-2.5px;top:47%;height:2.5px;background:#fff}
+.app-sub{font-size:11.5px;color:rgba(255,255,255,.62);margin-top:3px;font-weight:500}
+.header-btn{
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff;
+  padding:8px 12px;border-radius:999px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px;
+}
+.header-btn:active{background:rgba(255,255,255,.22)}
 
-        body {
-            background-color: #d1c29b;
-            color: #2c221e;
-            font-family: 'DotGothic16', monospace;
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            user-select: none;
-            overflow: hidden;
-            touch-action: manipulation;
-        }
+main{flex:1;max-width:640px;width:100%;margin:0 auto;padding:16px 16px calc(96px + var(--safe-b));}
 
-        .game-header, .game-footer {
-            height: 48px;
-            background: #b89775;
-            border-top: 3px solid #8c6747;
-            border-bottom: 3px solid #8c6747;
-            display: flex;
-            align-items: center;
-            padding: 0 16px;
-            z-index: 30;
-            flex-shrink: 0;
-            font-size: 12px;
-            color: #5c3a21;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-        }
-        .game-header {
-            border-top: none;
-            justify-content: flex-end; /* 右側に配置 */
-            transform: rotate(180deg); /* 180度回転 */
-        }
-        .game-footer {
-            border-bottom: none;
-            justify-content: flex-end;
-        }
+.bottom-nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(14px);
+  border-top:1px solid var(--border);
+  display:flex;padding:6px 8px calc(6px + var(--safe-b));
+  max-width:640px;margin:0 auto;
+}
+@media (min-width:641px){ .bottom-nav{left:50%;transform:translateX(-50%);width:640px} }
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 4px 6px;border-radius:14px;color:var(--ink-faint);transition:color .15s}
+.nav-btn .ic{font-size:19px;line-height:1}
+.nav-btn .lb{font-size:10.5px;font-weight:700}
+.nav-btn.on{color:var(--brand-strong)}
+.nav-btn.on .ic{transform:translateY(-1px)}
 
-        .player-side {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            padding: 6px 10px;
-            position: relative;
-            border-bottom: 3px solid #6b5344;
-            background: #ecdcc2;
-            transition: background 0.3s;
-        }
+/* cards & sections */
+.card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);border:1px solid var(--border)}
+.section-title{font-size:14px;font-weight:900;color:var(--ink);display:flex;align-items:center;gap:6px;margin:22px 0 10px}
+.section-title:first-child{margin-top:0}
 
-        #top-player {
-            transform: rotate(180deg);
-        }
+.btn{border-radius:999px;font-weight:700;padding:11px 18px;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:transform .1s}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand-strong));color:#fff;box-shadow:0 8px 20px -8px rgba(91,61,245,.55)}
+.btn-ghost{background:var(--surface-alt);color:var(--ink-soft);border:1px solid var(--border)}
+.btn-danger{background:#FCEAEF;color:var(--danger)}
+.btn-gold{background:linear-gradient(135deg,#F3B23E,#D98A15);color:#3a2400;box-shadow:0 10px 22px -8px rgba(217,138,21,.55)}
+.btn-sm{padding:7px 12px;font-size:12px}
+.btn-block{width:100%}
+.btn[disabled]{opacity:.5;pointer-events:none}
 
-        #bottom-player {
-            border-bottom: none;
-        }
+.field-label{font-size:11.5px;font-weight:700;color:var(--ink-soft);margin-bottom:5px;display:block}
+.input{width:100%;border:1.5px solid var(--border);background:var(--surface-alt);border-radius:var(--radius-sm);padding:10px 12px;font-size:14.5px}
+.input:focus{outline:none;border-color:var(--brand)}
 
-        #top-player .player-label,
-        #bottom-player .player-label {
-            display: none;
-        }
+.chip{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 11px 6px 6px;border-radius:999px;
+  background:var(--surface-alt);border:1.5px solid var(--border);font-size:12.5px;font-weight:700;color:var(--ink);
+}
+.chip:active{background:#EFE9FE}
+.chip .thumb{width:22px;height:22px;border-radius:50%;object-fit:cover;background:var(--grey-bg);flex:none}
+.chip .thumb-ph{width:22px;height:22px;border-radius:50%;background:var(--grey-bg);display:flex;align-items:center;justify-content:center;font-size:11px;flex:none}
 
-        @keyframes hit-recoil {
-            0% { transform: scale(1) translateX(0); }
-            20% { transform: scale(1.15) translateX(-8px) rotate(-5deg); filter: brightness(1.5) sepia(1); }
-            40% { transform: scale(1.1) translateX(8px) rotate(5deg); }
-            60% { transform: scale(1.05) translateX(-4px); }
-            100% { transform: scale(1) translateX(0); }
-        }
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;padding:3px 8px;border-radius:8px;white-space:nowrap}
+.tag-gold{color:var(--gold);background:var(--gold-bg);border:1px solid var(--gold-border)}
+.tag-silver{color:var(--silver);background:var(--silver-bg);border:1px solid var(--silver-border)}
+.tag-blue{color:var(--blue);background:var(--blue-bg);border:1px solid var(--blue-border)}
+.tag-purple{color:var(--purple);background:var(--purple-bg);border:1px solid var(--purple-border)}
+.tag-grey{color:var(--grey);background:var(--grey-bg);border:1px solid var(--border)}
 
-        .hit-effect {
-            animation: hit-recoil 0.35s ease-in-out;
-        }
+.tabbar{display:flex;background:var(--surface-alt);border:1px solid var(--border);border-radius:999px;padding:4px;gap:2px}
+.tabbar button{flex:1;padding:8px 6px;border-radius:999px;font-size:12.5px;font-weight:800;color:var(--ink-soft)}
+.tabbar button.on{background:var(--surface);color:var(--brand-strong);box-shadow:0 2px 6px rgba(60,40,120,.12)}
 
-        .flash-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, rgba(255, 140, 20, 0.65) 0%, rgba(200, 30, 0, 0.75) 100%);
-            opacity: 0;
-            pointer-events: none;
-            mix-blend-mode: overlay;
-            transition: opacity 0.05s ease-out;
-            z-index: 10;
-        }
+/* record history */
+.rec-card{border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface);overflow:hidden;position:relative}
+.rec-bar{position:absolute;left:0;top:0;bottom:0;width:5px}
+.rec-head{padding:13px 14px 13px 17px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.rec-avatars{display:flex;align-items:center}
+.rec-avatars img,.rec-avatars .ph{width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);margin-left:-8px;background:var(--grey-bg)}
+.rec-avatars img:first-child,.rec-avatars .ph:first-child{margin-left:0}
+.rec-avatars .ph{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--ink-faint)}
+.rec-avatars .more{width:30px;height:30px;border-radius:50%;background:var(--brand-deep2);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-left:-8px;border:2px solid #fff}
+.rec-body{padding:0 16px 15px}
+.month-head{font-size:12.5px;font-weight:900;color:var(--ink-faint);margin:20px 2px 8px;letter-spacing:.03em}
+.month-head:first-child{margin-top:0}
 
-        .flash-active {
-            opacity: 1;
-        }
+/* capsule stage */
+.stage{
+  position:relative;border-radius:var(--radius-lg);overflow:hidden;
+  background:radial-gradient(120% 140% at 50% 15%,#3A2A72 0%,#1a1236 65%,#120b26 100%);
+  min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.stage::before{
+  content:"";position:absolute;inset:0;opacity:.55;
+  background-image:radial-gradient(1.5px 1.5px at 15% 22%,#fff,transparent),
+    radial-gradient(1px 1px at 85% 15%,#fff,transparent),
+    radial-gradient(1px 1px at 70% 75%,#fff,transparent),
+    radial-gradient(1.5px 1.5px at 10% 80%,#fff,transparent),
+    radial-gradient(1px 1px at 40% 40%,#fff,transparent),
+    radial-gradient(1px 1px at 92% 55%,#fff,transparent);
+}
+.stage-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.stage-flash.on{animation:flashPulse .5s ease-in-out}
+@keyframes flashPulse{0%,100%{opacity:0}45%{opacity:.9}}
+.stage-flash.gold.on{background:radial-gradient(circle,#FFE9A8 0%,#fff 70%)}
+.stage-ring{position:absolute;width:190px;height:190px;border-radius:50%;pointer-events:none}
+.ring-gold{background:radial-gradient(circle,rgba(255,201,74,.55) 0%,rgba(255,201,74,0) 70%);animation:ringSpin 1.6s linear infinite}
+.ring-blue{background:radial-gradient(circle,rgba(110,160,255,.45) 0%,rgba(110,160,255,0) 70%);animation:ringSpin 2s linear infinite}
+@keyframes ringSpin{0%{transform:rotate(0) scale(1)}50%{transform:rotate(180deg) scale(1.12)}100%{transform:rotate(360deg) scale(1)}}
+.stage-step{position:relative;z-index:3;font-size:11.5px;font-weight:800;color:#fff;background:rgba(255,255,255,.14);padding:4px 12px;border-radius:999px;margin-bottom:10px}
+.stage-main{position:relative;z-index:3;height:150px;display:flex;align-items:center;justify-content:center;width:100%}
+.gift-emoji{font-size:64px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35))}
+@keyframes wobble{0%{transform:rotate(0) scale(1)}25%{transform:rotate(-9deg) scale(1.08)}50%{transform:rotate(9deg) scale(1.08)}75%{transform:rotate(-4deg) scale(1.03)}100%{transform:rotate(0) scale(1)}}
+.wobbling{animation:wobble .16s ease-in-out infinite}
+@keyframes popIn{0%{transform:scale(.2);opacity:0}55%{transform:scale(1.22);opacity:1}100%{transform:scale(1);opacity:1}}
+.pop-in{animation:popIn .38s cubic-bezier(.2,1.4,.4,1) forwards}
+.reveal-emoji{font-size:76px;filter:drop-shadow(0 8px 18px rgba(0,0,0,.4))}
+.reveal-art{
+  width:118px;height:118px;border-radius:20px;object-fit:cover;
+  box-shadow:0 0 0 3px rgba(255,255,255,.85),0 10px 30px -8px rgba(0,0,0,.5);
+}
+.reveal-art-wrap.gold .reveal-art{box-shadow:0 0 0 3px #FFD873,0 0 34px 4px rgba(255,201,74,.75)}
+.reveal-art-wrap.blue .reveal-art{box-shadow:0 0 0 3px #9DC0FF,0 0 26px 3px rgba(110,160,255,.65)}
+.reveal-name{position:relative;z-index:3;color:#fff;font-weight:800;font-size:13px;margin-top:10px;text-align:center;padding:0 20px}
+.reveal-name .tag{margin-top:4px}
+.stage-results{position:relative;z-index:3;display:flex;flex-wrap:wrap;justify-content:center;gap:7px;width:100%;max-width:300px;padding:6px 4px}
+.res-slot{width:calc(20% - 6px);aspect-ratio:1/1;border-radius:12px;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 2px 8px rgba(0,0,0,.25);opacity:0;animation:slotIn .4s ease forwards;overflow:hidden}
+.res-slot img{width:100%;height:100%;object-fit:cover}
+.res-slot.gold{box-shadow:0 0 0 2px var(--gold-glow),0 2px 8px rgba(0,0,0,.25)}
+.res-slot.blue{box-shadow:0 0 0 2px var(--blue-glow),0 2px 8px rgba(0,0,0,.25)}
+@keyframes slotIn{from{opacity:0;transform:translateY(8px) scale(.7)}to{opacity:1;transform:translateY(0) scale(1)}}
 
-        .arena {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin: auto 0;
-            z-index: 5;
-            transform: translateY(20px);
-        }
+/* particles for 5star burst */
+.spark{position:absolute;z-index:2;width:6px;height:6px;background:#FFDE85;border-radius:1px;pointer-events:none;opacity:0}
+.spark.go{animation:sparkOut .7s ease-out forwards}
+@keyframes sparkOut{0%{opacity:1;transform:translate(0,0) scale(1) rotate(0)}100%{opacity:0;transform:var(--tt) scale(.3) rotate(180deg)}}
 
-        #top-player .arena {
-            transform: translateY(20px);
-        }
+/* modal */
+.modal-back{position:fixed;inset:0;background:rgba(18,10,35,.6);backdrop-filter:blur(2px);z-index:60;display:flex;align-items:flex-end;justify-content:center}
+@media (min-width:641px){.modal-back{align-items:center}}
+.modal-sheet{background:var(--surface);width:100%;max-width:520px;border-radius:24px 24px 0 0;padding:20px 20px calc(24px + var(--safe-b));box-shadow:var(--shadow-pop);max-height:88vh;overflow-y:auto;animation:sheetUp .28s cubic-bezier(.2,1,.3,1)}
+@media (min-width:641px){.modal-sheet{border-radius:24px;max-height:80vh}}
+@keyframes sheetUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-title{font-size:16px;font-weight:900;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
 
-        .marmot-container {
-            width: 90px;
-            height: 90px;
-            margin-bottom: 2px;
-            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            filter: drop-shadow(0 3px 5px rgba(0,0,0,0.25));
-            image-rendering: pixelated;
-            position: relative;
-        }
+/* gallery */
+.gal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.gal-card{position:relative;border-radius:16px;overflow:hidden;background:var(--surface-alt);border:1px solid var(--border);aspect-ratio:3/4;display:flex;flex-direction:column}
+.gal-card img{width:100%;flex:1;object-fit:cover}
+.gal-card .noimg{flex:1;display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--ink-faint)}
+.gal-card .gname{font-size:11px;font-weight:800;padding:5px 6px 6px;background:var(--surface);text-align:center;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gal-card .badge{position:absolute;top:5px;left:5px;font-size:9.5px;font-weight:900;padding:2px 6px;border-radius:6px}
+.gal-card .active-dot{position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:50%;background:#33C46A;box-shadow:0 0 0 2px #fff}
+.gal-add{border:2px dashed var(--border);border-radius:16px;aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--ink-faint);font-size:11.5px;font-weight:700}
 
-        .marmot-svg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-        }
+.empty{padding:36px 20px;text-align:center;color:var(--ink-faint)}
+.empty .ic{font-size:34px;margin-bottom:8px}
+.empty .t{font-weight:800;color:var(--ink-soft);font-size:14px;margin-bottom:3px}
+.empty .d{font-size:12.5px}
 
-        .marmot-container.waiting-anim .svg-frame-1 {
-            display: block;
-            animation: toggle-anim-1 0.4s infinite steps(1);
-        }
+.stat-num{font-family:'Zen Maru Gothic';font-weight:900}
+.mini-bar{height:7px;border-radius:99px;background:var(--grey-bg);overflow:hidden}
+.mini-bar>span{display:block;height:100%;border-radius:99px}
 
-        .marmot-container.waiting-anim .svg-frame-2 {
-            display: block;
-            animation: toggle-anim-2 0.4s infinite steps(1);
-        }
-
-        @keyframes toggle-anim-1 {
-            0%, 49.99% { opacity: 1; }
-            50%, 100% { opacity: 0; }
-        }
-
-        @keyframes toggle-anim-2 {
-            0%, 49.99% { opacity: 0; }
-            50%, 100% { opacity: 1; }
-        }
-
-        .marmot-container:not(.waiting-anim) .svg-frame-1 {
-            display: block;
-        }
-        .marmot-container:not(.waiting-anim) .svg-frame-2 {
-            display: none;
-        }
-
-        .marmot-container.shoot {
-            transform: scale(1.3) rotate(10deg);
-        }
-
-        .marmot-container.dead {
-            filter: grayscale(1) brightness(0.6) opacity(0.7);
-            transform: rotate(-90deg) translateY(10px);
-        }
-
-        .status-text {
-            font-family: 'DotGothic16', monospace;
-            font-size: 14px;
-            font-weight: bold;
-            color: #5c3a21;
-            height: 20px;
-            text-align: center;
-            letter-spacing: 0.5px;
-            margin-top: 2px;
-        }
-
-        .result-detail {
-            font-size: 13px;
-            color: #8C6747;
-            height: 22px;
-            font-weight: bold;
-        }
-
-        #global-center-stage {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80px;
-            height: 80px;
-            background: transparent;
-            border: none;
-            border-radius: 0px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 20;
-            box-shadow: none;
-            image-rendering: pixelated;
-        }
-
-        .bottom-controls {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 4px;
-            z-index: 5;
-            position: relative;
-        }
-
-        .control-group {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .score-icons {
-            display: flex;
-            gap: 2px;
-            align-items: center;
-            padding: 2px 4px;
-            background: #e6d3b3;
-            border: 1px solid #bda886;
-            border-radius: 4px;
-            height: 36px;
-        }
-
-        .star-icon {
-            font-size: 11px;
-            color: #bfa580;
-            line-height: 1;
-            transition: color 0.2s, transform 0.2s;
-            opacity: 0.3;
-        }
-
-        .star-icon.won {
-            color: #d4ac0d;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-            transform: scale(1.1);
-            opacity: 1;
-        }
-
-        .icon-btn {
-            background: #e6d3b3;
-            border: 1px solid #bda886;
-            border-radius: 4px;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-weight: bold;
-            color: #4a3324;
-            font-size: 14px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-
-        .icon-btn:active {
-            background: #d4bc95;
-        }
-
-        .action-btn {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #704b2b;
-            color: #fff;
-            border: 1px solid #543d32;
-            padding: 8px 24px;
-            font-size: 14px;
-            font-family: 'DotGothic16', monospace;
-            font-weight: bold;
-            letter-spacing: 1px;
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.25);
-            transition: all 0.1s;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 6;
-        }
-
-        .action-btn:active {
-            transform: translateX(-50%) translateY(1px);
-        }
-
-        .action-btn.ready-state {
-            background: #1e8449;
-            border-color: #145a32;
-        }
-
-        .action-btn:disabled {
-            background: #beafa0;
-            border-color: #ab9b88;
-            color: #7a6d5e;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        #start-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(44, 34, 30, 0.75);
-            backdrop-filter: blur(3px);
-            z-index: 200;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: opacity 0.3s ease;
-        }
-
-        #start-overlay.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        #start-overlay.orient-p1 .overlay-card {
-            transform: rotate(0deg);
-        }
-        #start-overlay.orient-p2 .overlay-card {
-            transform: rotate(180deg);
-        }
-
-        .overlay-card {
-            background: #f4ebd0;
-            border: 3px solid #a67c52;
-            padding: 30px 40px;
-            border-radius: 8px;
-            text-align: center;
-            color: #2c221e;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-            transition: transform 0.2s ease;
-        }
-
-        .overlay-card h2 {
-            margin-top: 0;
-            color: #5c3a21;
-            font-family: 'DotGothic16', monospace;
-            font-size: 24px;
-            margin-bottom: 8px;
-            letter-spacing: 1px;
-        }
-
-        .overlay-sub {
-            font-size: 14px;
-            color: #8c6747;
-            font-weight: bold;
-            margin-bottom: 20px;
-            height: 20px;
-        }
-
-        .big-start-btn {
-            background: #704b2b;
-            color: #fff;
-            border: 2px solid #543d32;
-            padding: 12px 32px;
-            font-size: 18px;
-            font-family: 'DotGothic16', monospace;
-            font-weight: bold;
-            letter-spacing: 2px;
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            transition: transform 0.1s, background 0.1s;
-        }
-
-        .big-start-btn:active {
-            transform: translateY(2px);
-            background: #5a3a20;
-        }
-
-        #modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(44,34,30,0.6);
-            backdrop-filter: blur(2px);
-            z-index: 100;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background: #f4ebd0;
-            border: 2px solid #a67c52;
-            padding: 22px;
-            border-radius: 6px;
-            max-width: 320px;
-            text-align: center;
-            color: #2c221e;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-        .modal-content h3 { 
-            margin-top: 0; 
-            font-family: 'DotGothic16', monospace;
-            color: #5c3a21;
-            border-bottom: 1px solid #d4c2a5;
-            padding-bottom: 8px;
-        }
-        .modal-content button {
-            margin-top: 15px;
-            padding: 6px 16px;
-            background: #704b2b;
-            color: #fff;
-            border: 1px solid #543d32;
-            font-family: 'DotGothic16', monospace;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-    </style>
+@media (prefers-reduced-motion: reduce){
+  .wobbling,.pop-in,.ring-gold,.ring-blue,.res-slot,.spark.go,.stage-flash.on{animation-duration:.01ms !important;animation-iteration-count:1 !important}
+}
+</style>
 </head>
 <body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
-    <div id="start-overlay" class="orient-p1">
-        <div class="overlay-card">
-            <h2 id="overlay-title">奪え！マンゴー！</h2>
-            <div id="overlay-sub" class="overlay-sub"></div>
-            <button class="big-start-btn" id="overlay-btn" onclick="triggerMainGameStart()">ゲームスタート</button>
+/* ---------- constants ---------- */
+const TYPE_META = {
+  '星5PU': { key:'星5PU', label:'★5 PU', tag:'tag-gold', bar:'var(--gold)', rarity:5, pu:true },
+  '星5他': { key:'星5他', label:'★5', tag:'tag-silver', bar:'var(--silver)', rarity:5, pu:false },
+  '星4PU': { key:'星4PU', label:'★4 PU', tag:'tag-blue', bar:'var(--blue)', rarity:4, pu:true },
+  'その他': { key:'その他', label:'その他', tag:'tag-grey', bar:'var(--grey)', rarity:0, pu:false },
+  '特殊':   { key:'特殊',   label:'特殊', tag:'tag-purple', bar:'var(--purple)', rarity:0, pu:false },
+};
+const TYPE_ORDER = ['星5PU','星5他','星4PU','その他','特殊'];
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+
+function load(key, fallback){
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch(e){ return fallback; }
+}
+function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+
+function resizeImage(file, maxDim=520, quality=0.86){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height && width > maxDim) { height = Math.round(height * maxDim/width); width = maxDim; }
+        else if (height > maxDim) { width = Math.round(width * maxDim/height); height = maxDim; }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function playChime(tier, on){
+  if (!on) return;
+  try{
+    const ctx = playChime._ctx || (playChime._ctx = new (window.AudioContext||window.webkitAudioContext)());
+    const notesByTier = { gold:[784,988,1318], blue:[659,880], plain:[523] };
+    const notes = notesByTier[tier] || notesByTier.plain;
+    notes.forEach((freq, i) => {
+      const t0 = ctx.currentTime + i*0.09;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(tier==='plain'?0.05:0.09, t0+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0+0.5);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t0); osc.stop(t0+0.55);
+    });
+  }catch(e){}
+}
+
+/* ---------- small shared UI ---------- */
+function Tag({type}){
+  const m = TYPE_META[type] || TYPE_META['その他'];
+  return <span className={"tag "+m.tag}>{m.label}</span>;
+}
+
+function Modal({title, onClose, children, wide}){
+  return (
+    <div className="modal-back" onClick={onClose}>
+      <div className="modal-sheet" onClick={e=>e.stopPropagation()}>
+        <div className="modal-title"><span>{title}</span>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>閉じる</button>
         </div>
+        {children}
+      </div>
     </div>
+  );
+}
 
-    <header class="game-header">マーモット2</header>
+/* ================= RECORDS TAB ================= */
+function RecordsTab({records, setRecords, servants}){
+  const [editingId, setEditingId] = useState(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [puSaba, setPuSaba] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [countA, setCountA] = useState('');
+  const [countB, setCountB] = useState('');
+  const [tenjo, setTenjo] = useState('0');
+  const [isNoFourStarPU, setIsNoFourStarPU] = useState(false);
+  const [shoukanList, setShoukanList] = useState([]);
+  const [bikou, setBikou] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [onlyTenjo, setOnlyTenjo] = useState(false);
+  const [searchYear, setSearchYear] = useState('all');
 
-    <div id="global-center-stage"></div>
+  const totalCount = useMemo(() => {
+    const a = countA===''?0:parseInt(countA)||0, b = countB===''?0:parseInt(countB)||0;
+    return a + 11*b;
+  }, [countA, countB]);
 
-    <div id="top-player" class="player-side" data-player="2">
-        <div class="player-label">マーモット 2</div>
-        <div class="flash-overlay" id="p2-flash"></div>
+  const bannerNames = useMemo(() => Array.from(new Set(records.map(r=>r.puSaba))).slice(0,30), [records]);
 
-        <div class="arena">
-            <div class="marmot-container" id="p2-avatar">
-                <svg class="marmot-svg svg-frame-1" viewBox="0 0 32 32" width="100%" height="100%" style="shape-rendering: crispEdges;">
-                    <rect x="13" y="4" width="2" height="2" fill="#8f6b3e"/>
-                    <rect x="17" y="4" width="2" height="2" fill="#8f6b3e"/>
-                    <rect x="10" y="5" width="12" height="7" fill="#bfa172"/>
-                    <rect x="9" y="7" width="14" height="5" fill="#cbb187"/>
-                    <rect x="10" y="6" width="3" height="3" fill="#8f6b3e"/>
-                    <rect x="19" y="6" width="3" height="3" fill="#8f6b3e"/>
-                    <rect x="9" y="6" width="6" height="4" fill="#111111"/>
-                    <rect x="17" y="6" width="6" height="4" fill="#111111"/>
-                    <rect x="15" y="7" width="2" height="2" fill="#111111"/>
-                    <rect x="10" y="7" width="2" height="1" fill="#666666"/>
-                    <rect x="18" y="7" width="2" height="1" fill="#666666"/>
-                    <rect x="13" y="10" width="6" height="2" fill="#221105"/>
-                    <rect x="14" y="11" width="4" height="2" fill="#111111"/>
-                    <rect x="15" y="13" width="2" height="2" fill="#ffffff"/>
-                    <rect x="15" y="13" width="1" height="2" fill="#d0d0d0"/>
-                    <rect x="8" y="12" width="16" height="15" fill="#c49a5b"/>
-                    <rect x="7" y="16" width="18" height="10" fill="#d9ad6f"/>
-                    <rect x="10" y="15" width="12" height="8" fill="#ecd094"/>
-                    <rect x="11" y="17" width="10" height="5" fill="#f7e1ad"/>
-                    <rect x="10" y="19" width="4" height="6" fill="#7a522e"/>
-                    <rect x="18" y="19" width="4" height="6" fill="#7a522e"/>
-                    <rect x="10" y="25" width="1" height="1" fill="#111111"/>
-                    <rect x="12" y="25" width="1" height="1" fill="#111111"/>
-                    <rect x="19" y="25" width="1" height="1" fill="#111111"/>
-                    <rect x="21" y="25" width="1" height="1" fill="#111111"/>
-                </svg>
-                <svg class="marmot-svg svg-frame-2" viewBox="0 0 32 32" width="100%" height="100%" style="shape-rendering: crispEdges;">
-                    <rect x="13" y="5" width="2" height="2" fill="#8f6b3e"/>
-                    <rect x="17" y="5" width="2" height="2" fill="#8f6b3e"/>
-                    <rect x="10" y="6" width="12" height="7" fill="#bfa172"/>
-                    <rect x="9" y="8" width="14" height="5" fill="#cbb187"/>
-                    <rect x="10" y="7" width="3" height="3" fill="#8f6b3e"/>
-                    <rect x="19" y="7" width="3" height="3" fill="#8f6b3e"/>
-                    <rect x="9" y="7" width="6" height="4" fill="#111111"/>
-                    <rect x="17" y="7" width="6" height="4" fill="#111111"/>
-                    <rect x="15" y="8" width="2" height="2" fill="#111111"/>
-                    <rect x="10" y="8" width="2" height="1" fill="#666666"/>
-                    <rect x="18" y="8" width="2" height="1" fill="#666666"/>
-                    <rect x="13" y="11" width="6" height="2" fill="#221105"/>
-                    <rect x="14" y="12" width="4" height="2" fill="#111111"/>
-                    <rect x="15" y="14" width="2" height="2" fill="#ffffff"/>
-                    <rect x="15" y="14" width="1" height="2" fill="#d0d0d0"/>
-                    <rect x="8" y="13" width="16" height="14" fill="#c49a5b"/>
-                    <rect x="7" y="16" width="18" height="9" fill="#d9ad6f"/>
-                    <rect x="10" y="15" width="12" height="7" fill="#ecd094"/>
-                    <rect x="11" y="17" width="10" height="4" fill="#f7e1ad"/>
-                    <rect x="10" y="18" width="4" height="5" fill="#7a522e"/>
-                    <rect x="18" y="18" width="4" height="5" fill="#7a522e"/>
-                    <rect x="10" y="23" width="1" height="1" fill="#111111"/>
-                    <rect x="12" y="23" width="1" height="1" fill="#111111"/>
-                    <rect x="19" y="23" width="1" height="1" fill="#111111"/>
-                    <rect x="21" y="23" width="1" height="1" fill="#111111"/>
-                </svg>
+  const resetForm = () => {
+    setEditingId(null); setPuSaba(''); setDate(new Date().toISOString().split('T')[0]);
+    setCountA(''); setCountB(''); setTenjo('0'); setIsNoFourStarPU(false);
+    setShoukanList([]); setBikou('');
+  };
+
+  const addQuickServant = (sv) => {
+    setShoukanList(list => {
+      const idx = list.findIndex(s => s.name === sv.name);
+      if (idx >= 0){
+        const copy = [...list];
+        copy[idx] = {...copy[idx], count: (parseInt(copy[idx].count)||0) + 1};
+        return copy;
+      }
+      const type = sv.rarity === 5 ? '星5PU' : sv.rarity === 4 ? '星4PU' : '星5他';
+      return [...list, { name: sv.name, count: 1, type, img: sv.img||null }];
+    });
+    setFormOpen(true);
+  };
+
+  const updateRow = (i, field, val) => setShoukanList(list => list.map((s,idx)=> idx===i?{...s,[field]:val}:s));
+  const removeRow = (i) => setShoukanList(list => list.filter((_,idx)=>idx!==i));
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    if (!puSaba.trim()){ alert('PU鯖・バナー名を入力してください。'); return; }
+    const formatted = shoukanList.filter(s=>s.name.trim()!=='').map(s=>({
+      name:s.name, count: s.count===''?1:parseInt(s.count)||1, type: s.type || '星5PU', img: s.img || null
+    }));
+    const payload = { puSaba, date, totalCount, tenjo: tenjo?parseInt(tenjo):0, isNoFourStarPU, shoukanList: formatted, bikou };
+    if (editingId){
+      setRecords(rs => rs.map(r => r.id===editingId ? {...r, ...payload} : r));
+    } else {
+      setRecords(rs => [{ id: uid(), ...payload }, ...rs]);
+    }
+    resetForm(); setFormOpen(false);
+  };
+
+  const handleEdit = (rec) => {
+    setEditingId(rec.id); setFormOpen(true);
+    setPuSaba(rec.puSaba); setDate(rec.date);
+    setCountA(String(rec.totalCount % 11)); setCountB(String(Math.floor(rec.totalCount/11)));
+    setTenjo(String(rec.tenjo||0)); setIsNoFourStarPU(!!rec.isNoFourStarPU);
+    setShoukanList(rec.shoukanList && rec.shoukanList.length ? rec.shoukanList : []);
+    setBikou(rec.bikou||'');
+    window.scrollTo({top:0, behavior:'smooth'});
+  };
+
+  const handleDelete = (id) => {
+    if (confirm('この記録を削除しますか？')){
+      setRecords(rs => rs.filter(r=>r.id!==id));
+      if (editingId===id){ resetForm(); setFormOpen(false); }
+    }
+  };
+
+  const availableYears = useMemo(() => {
+    const years = new Set(records.map(r=>r.date.substring(0,4)));
+    years.add(String(new Date().getFullYear()));
+    return Array.from(years).sort((a,b)=>b-a);
+  }, [records]);
+
+  const grouped = useMemo(() => {
+    const filtered = records.filter(r => {
+      const hay = (r.puSaba + ' ' + (r.shoukanList||[]).map(s=>s.name).join(' ') + ' ' + (r.bikou||'')).toLowerCase();
+      const okSearch = hay.includes(searchTerm.toLowerCase());
+      const okTenjo = onlyTenjo ? (r.tenjo && r.tenjo>0) : true;
+      const okYear = searchYear==='all' ? true : r.date.substring(0,4)===searchYear;
+      return okSearch && okTenjo && okYear;
+    }).sort((a,b)=> new Date(b.date) - new Date(a.date));
+    const groups = [];
+    let cur = null;
+    filtered.forEach(r => {
+      const m = r.date.substring(0,7);
+      if (!cur || cur.key !== m){ cur = { key:m, label: m.replace('-','年')+'月', items:[] }; groups.push(cur); }
+      cur.items.push(r);
+    });
+    return groups;
+  }, [records, searchTerm, onlyTenjo, searchYear]);
+
+  const servantImgByName = useMemo(() => {
+    const map = {};
+    servants.forEach(s => { if (s.img) map[s.name]=s.img; });
+    return map;
+  }, [servants]);
+
+  const handleExport = () => {
+    const dataStr = JSON.stringify(records, null, 2);
+    const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
+    const blob = new Blob([dataStr], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `FGOrecord_${dateStr}.json`; a.click();
+    URL.revokeObjectURL(url);
+  };
+  const handleImport = (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try{
+        const data = JSON.parse(ev.target.result);
+        if (!Array.isArray(data)) throw new Error('bad format');
+        if (confirm('現在の記録を上書きしてインポートしますか？')){ setRecords(data); alert('読み込みました！'); }
+      }catch(err){ alert('ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。'); }
+    };
+    reader.readAsText(file); e.target.value = '';
+  };
+  const handleCopy = () => {
+    if (records.length===0){ alert('コピーする記録がありません。'); return; }
+    const text = [...records].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(r =>
+      `◼️${r.date}\n・PU：${r.puSaba}\n・合計：${r.totalCount}連\n・天井：${r.tenjo||0}回${r.isNoFourStarPU?' (星4PUなし)':''}\n＜結果＞\n${(r.shoukanList||[]).map(s=>`・${s.name} ${s.count}`).join('\n')}`
+    ).join('\n\n');
+    navigator.clipboard.writeText(text).then(()=>alert('履歴をコピーしました！'));
+  };
+
+  return (
+    <div>
+      <div className="section-title">📝 新しく記録する</div>
+      <div className="card" style={{padding:'16px'}}>
+        {!formOpen && !editingId ? (
+          <button className="btn btn-primary btn-block" onClick={()=>{resetForm(); setFormOpen(true);}}>＋ 記録を追加する</button>
+        ) : (
+          <form onSubmit={handleSave}>
+            <div style={{display:'flex',gap:10,marginBottom:12}}>
+              <div style={{flex:'0 0 130px'}}>
+                <label className="field-label">日付</label>
+                <input type="date" className="input" value={date} onChange={e=>setDate(e.target.value)} />
+              </div>
+              <div style={{flex:1}}>
+                <label className="field-label">PU鯖・バナー名 *</label>
+                <input list="banner-list" className="input" value={puSaba} onChange={e=>setPuSaba(e.target.value)} required placeholder="例）オベロン" />
+                <datalist id="banner-list">{bannerNames.map(n=><option key={n} value={n} />)}</datalist>
+              </div>
             </div>
-            <div class="status-text" id="p2-status">ボタンを押して準備</div>
-            <div class="result-detail" id="p2-detail"></div>
-        </div>
 
-        <div class="bottom-controls">
-            <div class="control-group">
-                <button class="icon-btn" onclick="openStartOverlay(); event.stopPropagation();" title="リセット">↺</button>
-                <div class="score-icons" id="p2-score-icons">
-                    <span class="star-icon">🥭</span>
-                    <span class="star-icon">🥭</span>
-                    <span class="star-icon">🥭</span>
+            <div style={{background:'var(--surface-alt)',border:'1px solid var(--border)',borderRadius:14,padding:12,marginBottom:12}}>
+              <label className="field-label" style={{marginBottom:8}}>連数の計算</label>
+              <div style={{display:'flex',gap:16,alignItems:'center',flexWrap:'wrap'}}>
+                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                  <span style={{fontSize:12,color:'var(--ink-soft)'}}>単発</span>
+                  <input type="number" min="0" className="input" style={{width:64,padding:'7px 8px',textAlign:'center'}} value={countA} onChange={e=>setCountA(e.target.value)} />
                 </div>
-            </div>
-            <button class="action-btn" id="p2-btn" data-player="2">開始</button>
-            <button class="icon-btn" onclick="toggleModal(); event.stopPropagation();">?</button>
-        </div>
-    </div>
-
-    <div id="bottom-player" class="player-side" data-player="1">
-        <div class="player-label">マーモット 1</div>
-        <div class="flash-overlay" id="p1-flash"></div>
-
-        <div class="arena">
-            <div class="marmot-container" id="p1-avatar">
-                <svg class="marmot-svg svg-frame-1" viewBox="0 0 32 32" width="100%" height="100%" style="shape-rendering: crispEdges;">
-                    <rect x="13" y="4" width="2" height="2" fill="#8f6b3e"/>
-                    <rect x="17" y="4" width="2" height="2" fill="#8f6b3e"/>
-                    <rect x="10" y="5" width="12" height="7" fill="#bfa172"/>
-                    <rect x="9" y="7" width="14" height="5" fill="#cbb187"/>
-                    <rect x="10" y="6" width="3" height="3" fill="#8f6b3e"/>
-                    <rect x="19" y="6" width="3" height="3" fill="#8f6b3e"/>
-                    <rect x="9" y="6" width="6" height="4" fill="#111111"/>
-                    <rect x="17" y="6" width="6" height="4" fill="#111111"/>
-                    <rect x="15" y="7" width="2" height="2" fill="#111111"/>
-                    <rect x="10" y="7" width="2" height="1" fill="#666666"/>
-                    <rect x="18" y="7" width="2" height="1" fill="#666666"/>
-                    <rect x="13" y="10" width="6" height="2" fill="#221105"/>
-                    <rect x="14" y="11" width="4" height="2" fill="#111111"/>
-                    <rect x="15" y="13" width="2" height="2" fill="#ffffff"/>
-                    <rect x="15" y="13" width="1" height="2" fill="#d0d0d0"/>
-                    <rect x="8" y="12" width="16" height="15" fill="#c49a5b"/>
-                    <rect x="7" y="16" width="18" height="10" fill="#d9ad6f"/>
-                    <rect x="10" y="15" width="12" height="8" fill="#ecd094"/>
-                    <rect x="11" y="17" width="10" height="5" fill="#f7e1ad"/>
-                    <rect x="10" y="19" width="4" height="6" fill="#7a522e"/>
-                    <rect x="18" y="19" width="4" height="6" fill="#7a522e"/>
-                    <rect x="10" y="25" width="1" height="1" fill="#111111"/>
-                    <rect x="12" y="25" width="1" height="1" fill="#111111"/>
-                    <rect x="19" y="25" width="1" height="1" fill="#111111"/>
-                    <rect x="21" y="25" width="1" height="1" fill="#111111"/>
-                </svg>
-                <svg class="marmot-svg svg-frame-2" viewBox="0 0 32 32" width="100%" height="100%" style="shape-rendering: crispEdges;">
-                    <rect x="13" y="5" width="2" height="2" fill="#8f6b3e"/>
-                    <rect x="17" y="5" width="2" height="2" fill="#8f6b3e"/>
-                    <rect x="10" y="6" width="12" height="7" fill="#bfa172"/>
-                    <rect x="9" y="8" width="14" height="5" fill="#cbb187"/>
-                    <rect x="10" y="7" width="3" height="3" fill="#8f6b3e"/>
-                    <rect x="19" y="7" width="3" height="3" fill="#8f6b3e"/>
-                    <rect x="9" y="7" width="6" height="4" fill="#111111"/>
-                    <rect x="17" y="7" width="6" height="4" fill="#111111"/>
-                    <rect x="15" y="8" width="2" height="2" fill="#111111"/>
-                    <rect x="10" y="8" width="2" height="1" fill="#666666"/>
-                    <rect x="18" y="8" width="2" height="1" fill="#666666"/>
-                    <rect x="13" y="11" width="6" height="2" fill="#221105"/>
-                    <rect x="14" y="12" width="4" height="2" fill="#111111"/>
-                    <rect x="15" y="14" width="2" height="2" fill="#ffffff"/>
-                    <rect x="15" y="14" width="1" height="2" fill="#d0d0d0"/>
-                    <rect x="8" y="13" width="16" height="14" fill="#c49a5b"/>
-                    <rect x="7" y="16" width="18" height="9" fill="#d9ad6f"/>
-                    <rect x="10" y="15" width="12" height="7" fill="#ecd094"/>
-                    <rect x="11" y="17" width="10" height="4" fill="#f7e1ad"/>
-                    <rect x="10" y="18" width="4" height="5" fill="#7a522e"/>
-                    <rect x="18" y="18" width="4" height="5" fill="#7a522e"/>
-                    <rect x="10" y="23" width="1" height="1" fill="#111111"/>
-                    <rect x="12" y="23" width="1" height="1" fill="#111111"/>
-                    <rect x="19" y="23" width="1" height="1" fill="#111111"/>
-                    <rect x="21" y="23" width="1" height="1" fill="#111111"/>
-                </svg>
-            </div>
-            <div class="status-text" id="p1-status">ボタンを押して準備</div>
-            <div class="result-detail" id="p1-detail"></div>
-        </div>
-
-        <div class="bottom-controls">
-            <div class="control-group">
-                <button class="icon-btn" onclick="openStartOverlay(); event.stopPropagation();" title="リセット">↺</button>
-                <div class="score-icons" id="p1-score-icons">
-                    <span class="star-icon">🥭</span>
-                    <span class="star-icon">🥭</span>
-                    <span class="star-icon">🥭</span>
+                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                  <span style={{fontSize:12,color:'var(--ink-soft)'}}>11連</span>
+                  <input type="number" min="0" className="input" style={{width:64,padding:'7px 8px',textAlign:'center'}} value={countB} onChange={e=>setCountB(e.target.value)} />
                 </div>
+                <div style={{marginLeft:'auto',fontWeight:800,fontSize:13}}>合計 <span className="stat-num" style={{fontSize:22,color:'var(--brand-strong)'}}>{totalCount}</span> 連</div>
+              </div>
             </div>
-            <button class="action-btn" id="p1-btn" data-player="1">開始</button>
-            <button class="icon-btn" onclick="toggleModal(); event.stopPropagation();">?</button>
+
+            <div style={{display:'flex',gap:16,alignItems:'flex-end',marginBottom:14,flexWrap:'wrap'}}>
+              <div>
+                <label className="field-label">天井した回数</label>
+                <select className="input" style={{width:88}} value={tenjo} onChange={e=>setTenjo(e.target.value)}>
+                  {[0,1,2,3,4,5].map(n=><option key={n} value={n}>{n}回</option>)}
+                </select>
+              </div>
+              <label style={{display:'flex',alignItems:'center',gap:7,paddingBottom:9,cursor:'pointer'}}>
+                <input type="checkbox" checked={isNoFourStarPU} onChange={e=>setIsNoFourStarPU(e.target.checked)} style={{width:18,height:18}} />
+                <span style={{fontSize:13,fontWeight:700,color:'var(--ink-soft)'}}>星4PUなし</span>
+              </label>
+            </div>
+
+            {servants.length>0 && (
+              <div style={{marginBottom:12}}>
+                <label className="field-label">登録サーヴァントから追加</label>
+                <div style={{display:'flex',gap:7,flexWrap:'wrap'}}>
+                  {servants.map(sv => (
+                    <button type="button" key={sv.id} className="chip" onClick={()=>addQuickServant(sv)}>
+                      {sv.img ? <img className="thumb" src={sv.img} /> : <span className="thumb-ph">{sv.name.slice(0,1)}</span>}
+                      {sv.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{marginBottom:10}}>
+              <label className="field-label">召喚結果</label>
+              <div style={{display:'flex',flexDirection:'column',gap:7}}>
+                {shoukanList.map((s,i) => (
+                  <div key={i} style={{display:'flex',gap:6,alignItems:'center'}}>
+                    <select className="input" style={{width:88,padding:'8px 6px',fontSize:12.5,flex:'none'}} value={s.type||'星5PU'} onChange={e=>updateRow(i,'type',e.target.value)}>
+                      {TYPE_ORDER.map(t=><option key={t} value={t}>{TYPE_META[t].label}</option>)}
+                    </select>
+                    <input type="text" placeholder="召喚した鯖名" className="input" style={{flex:1,minWidth:0}} value={s.name} onChange={e=>updateRow(i,'name',e.target.value)} />
+                    <input type="number" min="0" className="input" style={{width:52,textAlign:'center',flex:'none'}} value={s.count} onChange={e=>updateRow(i,'count',e.target.value)} placeholder="1" />
+                    <button type="button" onClick={()=>removeRow(i)} className="btn btn-danger btn-sm" style={{flex:'none',padding:'8px 10px'}}>✕</button>
+                  </div>
+                ))}
+              </div>
+              <button type="button" className="btn btn-ghost btn-sm" style={{marginTop:9}} onClick={()=>setShoukanList([...shoukanList,{name:'',count:1,type:'星5PU'}])}>＋ 手入力で追加</button>
+            </div>
+
+            <div style={{marginBottom:14}}>
+              <label className="field-label">備考</label>
+              <textarea className="input" rows="2" value={bikou} onChange={e=>setBikou(e.target.value)} placeholder="メモがあれば" />
+            </div>
+
+            <div style={{display:'flex',gap:8}}>
+              <button type="submit" className="btn btn-primary" style={{flex:1}}>{editingId?'変更を保存':'記録する'}</button>
+              <button type="button" className="btn btn-ghost" onClick={()=>{resetForm(); setFormOpen(false);}}>キャンセル</button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      <div className="section-title">🔍 履歴をさがす</div>
+      <div className="card" style={{padding:14,display:'flex',flexDirection:'column',gap:10}}>
+        <input type="text" className="input" placeholder="バナー名・サーヴァント名・メモで検索" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} />
+        <div style={{display:'flex',gap:10,alignItems:'center'}}>
+          <select className="input" style={{flex:1}} value={searchYear} onChange={e=>setSearchYear(e.target.value)}>
+            <option value="all">全期間</option>
+            {availableYears.map(y=><option key={y} value={y}>{y}年</option>)}
+          </select>
+          <label style={{display:'flex',alignItems:'center',gap:6,fontSize:12.5,fontWeight:700,color:'var(--ink-soft)',whiteSpace:'nowrap'}}>
+            <input type="checkbox" checked={onlyTenjo} onChange={e=>setOnlyTenjo(e.target.checked)} style={{width:16,height:16}} />
+            天井のみ
+          </label>
         </div>
-    </div>
-
-    <footer class="game-footer">マーモット1</footer>
-
-    <div id="modal" onclick="toggleModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <h3>奪え！マンゴー！</h3>
-            <p style="font-size: 13px; text-align: left; line-height: 1.6; color: #4a3324;">
-                現れては消える、極上の果実「マンゴー」。マーモットどもが息を潜めて待ち構える中、荒野に姿を現すのは甘い果実か、それとも罠か―― 一瞬の隙も許されない、最速の勝負が始まる。<br><br>
-                1. マンゴーが現れたら素早くタップ！相手より先に手に入れろ！<br>
-                2. あせりは禁物！手に入れたマンゴーを落としちまう！<br>
-                3. 片方がタップしてから2 秒以内に反撃しないと、その時点でラウンド終了！<br>
-                4. タマネギだけは絶対に避けろ！オレとの約束だ。
-            </p>
-            <button onclick="toggleModal()">閉じる</button>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+          <button className="btn btn-ghost btn-sm" onClick={handleCopy}>📋 全履歴をコピー</button>
+          <button className="btn btn-ghost btn-sm" onClick={handleExport}>📥 バックアップ保存</button>
+          <label className="btn btn-ghost btn-sm">📤 復元<input type="file" accept=".json" onChange={handleImport} style={{display:'none'}} /></label>
         </div>
+      </div>
+
+      <div className="section-title">📖 履歴 {grouped.length>0 && <span style={{color:'var(--ink-faint)',fontWeight:700,fontSize:12}}>（{records.length}件）</span>}</div>
+      {grouped.length===0 ? (
+        <div className="card empty">
+          <div className="ic">🌙</div>
+          <div className="t">まだ記録がありません</div>
+          <div className="d">最初の記録を追加すると、ここに履歴が並びます</div>
+        </div>
+      ) : grouped.map(g => (
+        <div key={g.key}>
+          <div className="month-head">{g.label}</div>
+          <div style={{display:'flex',flexDirection:'column',gap:10}}>
+            {g.items.map(rec => <RecordCard key={rec.id} rec={rec} onEdit={handleEdit} onDelete={handleDelete} imgMap={servantImgByName} />)}
+          </div>
+        </div>
+      ))}
     </div>
+  );
+}
 
-    <script>
-        let audioCtx = null;
+function RecordCard({rec, onEdit, onDelete, imgMap}){
+  const [open, setOpen] = useState(false);
+  const list = rec.shoukanList || [];
+  const bestRarity = list.reduce((best,s)=>{
+    const m = TYPE_META[s.type]||TYPE_META['その他'];
+    return m.rarity > best ? m.rarity : best;
+  }, 0);
+  const topType = list.find(s => (TYPE_META[s.type]||{}).rarity===bestRarity)?.type || (list[0]&&list[0].type) || 'その他';
+  const barColor = (TYPE_META[topType]||TYPE_META['その他']).bar;
+  const shown = list.slice(0,4);
+  const extra = list.length - shown.length;
 
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+  return (
+    <div className="rec-card">
+      <div className="rec-bar" style={{background:barColor}} />
+      <div className="rec-head" onClick={()=>setOpen(o=>!o)}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontWeight:800,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{rec.puSaba}</div>
+          <div style={{fontSize:11.5,color:'var(--ink-faint)',marginTop:2}}>
+            {rec.date} ・ {rec.totalCount}連{rec.tenjo?` ・ 天井${rec.tenjo}回`:''}{rec.isNoFourStarPU?' ・ 星4PUなし':''}
+          </div>
+        </div>
+        {list.length>0 && (
+          <div className="rec-avatars">
+            {shown.map((s,i)=> imgMap[s.name] ? <img key={i} src={imgMap[s.name]} /> : <span key={i} className="ph">{s.name.slice(0,1)}</span>)}
+            {extra>0 && <span className="more">+{extra}</span>}
+          </div>
+        )}
+        <span style={{color:'var(--ink-faint)',fontSize:11,transform:open?'rotate(180deg)':'none',transition:'transform .2s'}}>▼</span>
+      </div>
+      {open && (
+        <div className="rec-body">
+          {list.length>0 && (
+            <div style={{display:'flex',flexWrap:'wrap',gap:7,marginBottom:rec.bikou?10:2}}>
+              {list.map((s,i)=>(
+                <span key={i} className="chip" style={{background:'var(--surface-alt)'}}>
+                  {imgMap[s.name] ? <img className="thumb" src={imgMap[s.name]} /> : null}
+                  <Tag type={s.type} /> {s.name} ×{s.count}
+                </span>
+              ))}
+            </div>
+          )}
+          {rec.bikou && <div style={{fontSize:12.5,color:'var(--ink-soft)',background:'var(--surface-alt)',padding:9,borderRadius:10,marginBottom:10}}>{rec.bikou}</div>}
+          <div style={{display:'flex',gap:8}}>
+            <button className="btn btn-ghost btn-sm" onClick={()=>onEdit(rec)}>編集</button>
+            <button className="btn btn-danger btn-sm" onClick={()=>onDelete(rec.id)}>削除</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================= STATS TAB ================= */
+function StatsTab({records}){
+  const [statYear, setStatYear] = useState('all');
+  const availableYears = useMemo(() => {
+    const years = new Set(records.map(r=>r.date.substring(0,4)));
+    years.add(String(new Date().getFullYear()));
+    return Array.from(years).sort((a,b)=>b-a);
+  }, [records]);
+
+  const stats = useMemo(() => {
+    let count=0, pity=0, forFourRate=0;
+    const breakdown = {'星5PU':0,'星5他':0,'星4PU':0,'特殊':0};
+    const monthly = {};
+    let luckiest = null;
+    records.forEach(r => {
+      const y = r.date.substring(0,4), m = r.date.substring(0,7);
+      const inRange = statYear==='all' || y===statYear;
+      const fiveCount = (r.shoukanList||[]).filter(s=>s.type==='星5PU').reduce((a,s)=>a+parseInt(s.count||0),0);
+      if (inRange){
+        count += r.totalCount; pity += parseInt(r.tenjo||0);
+        if (!r.isNoFourStarPU) forFourRate += r.totalCount;
+        (r.shoukanList||[]).forEach(s => { if (breakdown.hasOwnProperty(s.type)) breakdown[s.type]+=parseInt(s.count||0); });
+        if (statYear!=='all'){
+          if (!monthly[m]) monthly[m]={count:0,pu:0};
+          monthly[m].count += r.totalCount;
+          monthly[m].pu += fiveCount;
         }
-
-        function playClickSe() {
-            initAudio();
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(220, audioCtx.currentTime + 0.05);
-
-                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.06);
-            } catch(e) {}
+        if (fiveCount>0 && r.totalCount>0 && (!luckiest || r.totalCount/fiveCount < luckiest.rate)){
+          luckiest = { rate: r.totalCount/fiveCount, rec:r };
         }
-
-        function playStartSound() {
-            initAudio();
-            try {
-                const chordNotes = [293.66, 349.23, 440.00, 587.33];
-                chordNotes.forEach((freq, idx) => {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    
-                    osc.type = 'triangle';
-                    const startTime = audioCtx.currentTime + idx * 0.08;
-                    
-                    osc.frequency.setValueAtTime(freq, startTime);
-
-                    gain.gain.setValueAtTime(0.0, startTime);
-                    gain.gain.linearRampToValueAtTime(0.12, startTime + 0.02);
-                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
-
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-
-                    osc.start(startTime);
-                    osc.stop(startTime + 0.45);
-                });
-            } catch(e) {}
-        }
-
-        function playGrabSound() {
-            initAudio();
-            try {
-                const bufferSize = audioCtx.sampleRate * 0.2;
-                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1;
-                }
-
-                const noise = audioCtx.createBufferSource();
-                noise.buffer = buffer;
-
-                const filter = audioCtx.createBiquadFilter();
-                filter.type = 'bandpass';
-                filter.frequency.setValueAtTime(800, audioCtx.currentTime);
-                filter.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.2);
-
-                const gain = audioCtx.createGain();
-                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-
-                noise.connect(filter);
-                filter.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                noise.start();
-            } catch(e) {}
-        }
-
-        function playVictorySound() {
-            initAudio();
-            try {
-                const notes = [523.25, 659.25, 783.99, 1046.50];
-                notes.forEach((freq, idx) => {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.12);
-
-                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime + idx * 0.12);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.12 + 0.2);
-
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-
-                    osc.start(audioCtx.currentTime + idx * 0.12);
-                    osc.stop(audioCtx.currentTime + idx * 0.12 + 0.25);
-                });
-            } catch(e) {}
-        }
-
-        function playDefeatSound() {
-            initAudio();
-            try {
-                const notes = [300, 250, 200];
-                notes.forEach((freq, idx) => {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.15);
-
-                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime + idx * 0.15);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.15 + 0.2);
-
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-
-                    osc.start(audioCtx.currentTime + idx * 0.15);
-                    osc.stop(audioCtx.currentTime + idx * 0.15 + 0.25);
-                });
-            } catch(e) {}
-        }
-
-        function playSadDefeatSound() {
-            initAudio();
-            try {
-                const notes = [293.66, 277.18, 246.94, 220.00];
-                notes.forEach((freq, idx) => {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = 'sine';
-                    const startTime = audioCtx.currentTime + idx * 0.18;
-                    
-                    osc.frequency.setValueAtTime(freq, startTime);
-                    osc.frequency.exponentialRampToValueAtTime(freq * 0.9, startTime + 0.25);
-
-                    gain.gain.setValueAtTime(0.2, startTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
-
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-
-                    osc.start(startTime);
-                    osc.stop(startTime + 0.35);
-                });
-            } catch(e) {}
-        }
-
-        function getVegetableSvg(type) {
-            switch(type) {
-                case 'mango':
-                    return `<svg viewBox="0 0 32 32" width="100%" height="100%" style="shape-rendering: crispEdges;">
-                        <rect x="14" y="5" width="4" height="3" fill="#3b220b"/>
-                        <rect x="16" y="4" width="2" height="2" fill="#2e7d32"/>
-                        
-                        <rect x="12" y="8" width="8" height="2" fill="#e53935"/>
-                        <rect x="10" y="10" width="12" height="3" fill="#e53935"/>
-                        <rect x="8" y="13" width="16" height="4" fill="#e53935"/>
-                        <rect x="8" y="17" width="16" height="4" fill="#ff9800"/>
-                        <rect x="9" y="21" width="14" height="3" fill="#ff9800"/>
-                        <rect x="11" y="24" width="10" height="2" fill="#9ccc65"/>
-
-                        <rect x="11" y="14" width="3" height="3" fill="#ffa726"/>
-                    </svg>`;
-                case 'apple':
-                    return `<svg viewBox="0 0 32 32" width="100%" height="100%" style="shape-rendering: crispEdges;">
-                        <rect x="15" y="6" width="2" height="2" fill="#5d4037"/>
-                        <rect x="17" y="5" width="3" height="2" fill="#8bc34a"/>
-                        
-                        <rect x="10" y="8" width="12" height="1" fill="#b71c1c"/>
-                        <rect x="9" y="9" width="14" height="2" fill="#c62828"/>
-                        <rect x="8" y="11" width="16" height="10" fill="#d32f2f"/>
-                        <rect x="9" y="21" width="14" height="2" fill="#c62828"/>
-                        <rect x="10" y="23" width="12" height="1" fill="#b71c1c"/>
-                        
-                        <rect x="11" y="13" width="5" height="3" fill="#ef5350"/>
-                        <rect x="12" y="14" width="2" height="2" fill="#ffffff"/>
-                        <rect x="18" y="15" width="2" height="1" fill="#ffcdd2"/>
-                    </svg>`;
-                case 'tamanegi':
-                    return `<svg viewBox="0 0 32 32" width="100%" height="100%" style="shape-rendering: crispEdges;">
-                        <rect x="14" y="4" width="4" height="4" fill="#27ae60"/>
-                        <rect x="13" y="8" width="6" height="2" fill="#d35400"/>
-                        <rect x="11" y="10" width="10" height="2" fill="#e67e22"/>
-                        <rect x="9" y="12" width="14" height="2" fill="#f39c12"/>
-                        <rect x="7" y="14" width="18" height="10" fill="#f39c12"/>
-                        <rect x="9" y="24" width="14" height="2" fill="#e67e22"/>
-                        <rect x="11" y="26" width="10" height="2" fill="#d35400"/>
-                        
-                        <rect x="9" y="14" width="14" height="10" fill="#f5b041"/>
-                        <rect x="12" y="16" width="6" height="4" fill="#fcf3cf" opacity="0.6"/>
-                    </svg>`;
-                default:
-                    return '';
-            }
-        }
-
-        let gameState = 'IDLE';
-        let p1Ready = false;
-        let p2Ready = false;
-        let timeoutIds = [];
-        let startTime = 0;
-        let p1Wins = 0;
-        let p2Wins = 0;
-
-        let p1Tapped = false;
-        let p2Tapped = false;
-        let p1Time = null;
-        let p2Time = null;
-        let currentVegetableType = '';
-        let firstTapTimer = null; // 2 秒以内の待機タイマー
-
-        const p1Status = document.getElementById('p1-status');
-        const p2Status = document.getElementById('p2-status');
-        const p1Detail = document.getElementById('p1-detail');
-        const p2Detail = document.getElementById('p2-detail');
-        const p1Btn = document.getElementById('p1-btn');
-        const p2Btn = document.getElementById('p2-btn');
-        const p1Avatar = document.getElementById('p1-avatar');
-        const p2Avatar = document.getElementById('p2-avatar');
-        const p1Flash = document.getElementById('p1-flash');
-        const p2Flash = document.getElementById('p2-flash');
-        const globalCenterStage = document.getElementById('global-center-stage');
-        const startOverlay = document.getElementById('start-overlay');
-        const overlayTitle = document.getElementById('overlay-title');
-        const overlaySub = document.getElementById('overlay-sub');
-        const overlayBtn = document.getElementById('overlay-btn');
-
-        document.querySelectorAll('.player-side').forEach(side => {
-            const playerNum = parseInt(side.getAttribute('data-player'));
-            side.addEventListener('pointerdown', (e) => {
-                if (e.target.tagName === 'BUTTON') return;
-                handleTap(playerNum);
-            });
-        });
-
-        document.querySelectorAll('.action-btn').forEach(btn => {
-            const playerNum = parseInt(btn.getAttribute('data-player'));
-            btn.addEventListener('pointerdown', (e) => {
-                e.stopPropagation();
-                handleButton(playerNum);
-            });
-        });
-
-        function updateScoreIcons() {
-            const p1Stars = document.querySelectorAll('#p1-score-icons .star-icon');
-            p1Stars.forEach((star, idx) => {
-                if (idx < p1Wins) star.classList.add('won');
-                else star.classList.remove('won');
-            });
-
-            const p2Stars = document.querySelectorAll('#p2-score-icons .star-icon');
-            p2Stars.forEach((star, idx) => {
-                if (idx < p2Wins) star.classList.add('won');
-                else star.classList.remove('won');
-            });
-        }
-
-        function clearAllTimeouts() {
-            timeoutIds.forEach(id => clearTimeout(id));
-            timeoutIds = [];
-            if (firstTapTimer) {
-                clearTimeout(firstTapTimer);
-                firstTapTimer = null;
-            }
-        }
-
-        function triggerFlash(playerNum) {
-            const flash = playerNum === 1 ? p1Flash : p2Flash;
-            flash.classList.add('flash-active');
-            setTimeout(() => {
-                flash.classList.remove('flash-active');
-            }, 120);
-        }
-
-        function triggerHitEffect(opponentNum) {
-            const avatar = opponentNum === 1 ? p1Avatar : p2Avatar;
-            avatar.classList.add('hit-effect');
-            setTimeout(() => {
-                avatar.classList.remove('hit-effect');
-            }, 350);
-        }
-
-        function setCenterObject(type) {
-            currentVegetableType = type;
-            globalCenterStage.innerHTML = getVegetableSvg(type);
-        }
-
-        function clearCenterObject() {
-            currentVegetableType = '';
-            globalCenterStage.innerHTML = '';
-        }
-
-        function openStartOverlay(targetPlayer = 1) {
-            clearAllTimeouts();
-            gameState = 'IDLE';
-            startOverlay.classList.remove('orient-p1', 'orient-p2');
-            startOverlay.classList.add(targetPlayer === 2 ? 'orient-p2' : 'orient-p1');
-            overlayTitle.textContent = '奪え！マンゴー！';
-            overlaySub.textContent = '';
-            overlayBtn.textContent = 'ゲームスタート';
-            startOverlay.classList.remove('hidden');
-        }
-
-        function triggerMainGameStart() {
-            playClickSe();
-            startOverlay.classList.add('hidden');
-            resetGame();
-        }
-
-        function resetGame() {
-            clearAllTimeouts();
-            clearCenterObject();
-            gameState = 'IDLE';
-            p1Ready = false;
-            p2Ready = false;
-            p1Wins = 0;
-            p2Wins = 0;
-            updateScoreIcons();
-
-            p1Avatar.classList.remove('shoot', 'dead', 'hit-effect', 'waiting-anim');
-            p2Avatar.classList.remove('shoot', 'dead', 'hit-effect', 'waiting-anim');
-
-            p1Status.textContent = 'ボタンを押して準備';
-            p2Status.textContent = 'ボタンを押して準備';
-            p1Detail.textContent = '';
-            p2Detail.textContent = '';
-
-            p1Btn.disabled = false;
-            p2Btn.disabled = false;
-            p1Btn.textContent = '開始';
-            p2Btn.textContent = '開始';
-            p1Btn.classList.remove('ready-state');
-            p2Btn.classList.remove('ready-state');
-        }
-
-        function handleButton(playerNum) {
-            playClickSe();
-            if (gameState === 'IDLE' || gameState === 'FINISHED') {
-                if (playerNum === 1) {
-                    p1Ready = true;
-                    p1Btn.textContent = '準備完了';
-                    p1Btn.classList.add('ready-state');
-                    p1Status.textContent = '相手の準備待ち...';
-                } else {
-                    p2Ready = true;
-                    p2Btn.textContent = '準備完了';
-                    p2Btn.classList.add('ready-state');
-                    p2Status.textContent = '相手の準備待ち...';
-                }
-
-                if (p1Ready && p2Ready) {
-                    startDuelSequence();
-                }
-            }
-        }
-
-        function startDuelSequence() {
-            gameState = 'WAITING';
-            p1Ready = false;
-            p2Ready = false;
-            p1Tapped = false;
-            p2Tapped = false;
-            p1Time = null;
-            p2Time = null;
-            clearCenterObject();
-
-            p1Avatar.classList.remove('shoot', 'dead', 'hit-effect');
-            p2Avatar.classList.remove('shoot', 'dead', 'hit-effect');
-
-            p1Avatar.classList.add('waiting-anim');
-            p2Avatar.classList.add('waiting-anim');
-
-            p1Btn.disabled = true;
-            p2Btn.disabled = true;
-            p1Btn.classList.remove('ready-state');
-            p2Btn.classList.remove('ready-state');
-
-            p1Status.textContent = '';
-            p2Status.textContent = '';
-            p1Detail.textContent = '';
-            p2Detail.textContent = '';
-
-            clearAllTimeouts();
-            playStartSound();
-
-            const totalWins = p1Wins + p2Wins;
-            let maxFeints = Math.max(1, 4 - Math.floor(totalWins * 0.5));
-            let feintCount = Math.floor(Math.random() * (maxFeints + 1));
-
-            runFeintLoop(feintCount);
-        }
-
-        function runFeintLoop(remainingFeints) {
-            if (gameState !== 'WAITING') return;
-
-            const nextDelay = Math.random() * 500 + 700;
-
-            timeoutIds.push(setTimeout(() => {
-                if (gameState !== 'WAITING') return;
-
-                if (remainingFeints > 0) {
-                    const feintTypes = ['apple', 'tamanegi'];
-                    const selectedFeintVeg = feintTypes[Math.floor(Math.random() * feintTypes.length)];
-
-                    setCenterObject(selectedFeintVeg);
-
-                    const hideTime = Math.random() * 800 + 1200;
-                    timeoutIds.push(setTimeout(() => {
-                        if (gameState !== 'WAITING') return;
-                        
-                        clearCenterObject();
-
-                        const pauseTime = Math.random() * 500 + 600;
-                        timeoutIds.push(setTimeout(() => {
-                            if (gameState !== 'WAITING') return;
-                            runFeintLoop(remainingFeints - 1);
-                        }, pauseTime));
-
-                    }, hideTime));
-
-                } else {
-                    // マンゴー出現前の間を他のフェイント野菜と同じペースに統一
-                    const realTime = Math.random() * 500 + 700;
-                    timeoutIds.push(setTimeout(() => {
-                        triggerMango();
-                    }, realTime));
-                }
-
-            }, nextDelay));
-        }
-
-        function triggerMango() {
-            if (gameState !== 'WAITING') return;
-            gameState = 'READY';
-            setCenterObject('mango');
-            startTime = performance.now();
-        }
-
-        function handleTap(playerNum) {
-            if (gameState === 'WAITING') {
-                const veg = currentVegetableType;
-                const isInstantDeath = (veg === 'tamanegi');
-
-                p1Avatar.classList.remove('waiting-anim');
-                p2Avatar.classList.remove('waiting-anim');
-
-                if (isInstantDeath) {
-                    clearAllTimeouts();
-                    gameState = 'FINISHED';
-                    playSadDefeatSound();
-                    playGrabSound();
-                    triggerFlash(playerNum);
-                    const opponentNum = playerNum === 1 ? 2 : 1;
-                    triggerHitEffect(opponentNum);
-
-                    const deathMessages = {
-                        'tamanegi': '💀タマネギを食べてしまった…'
-                    };
-
-                    if (playerNum === 1) {
-                        p1Tapped = true;
-                        p1Avatar.classList.add('dead');
-                        p2Avatar.classList.add('shoot');
-                        p1Status.textContent = '';
-                        p2Status.textContent = '';
-                        p1Detail.textContent = 'うぐっ…';
-                        p2Detail.textContent = 'なんてこったい';
-                        
-                        triggerGameOver(2, deathMessages[veg], 1, playerNum);
-                    } else {
-                        p2Tapped = true;
-                        p2Avatar.classList.add('dead');
-                        p1Avatar.classList.add('shoot');
-                        p2Status.textContent = '';
-                        p1Status.textContent = '';
-                        p2Detail.textContent = 'うぐっ…';
-                        p1Detail.textContent = 'なんこったい';
-                        
-                        triggerGameOver(1, deathMessages[veg], 2, playerNum);
-                    }
-                    return;
-                } else {
-                    clearAllTimeouts();
-                    gameState = 'FINISHED';
-                    playDefeatSound();
-                    playGrabSound();
-                    triggerFlash(playerNum);
-                    const opponentNum = playerNum === 1 ? 2 : 1;
-                    triggerHitEffect(opponentNum);
-
-                    if (playerNum === 1) {
-                        p1Tapped = true;
-                        p1Avatar.classList.add('dead');
-                        p2Avatar.classList.add('shoot');
-                        p1Status.textContent = '';
-                        p2Status.textContent = '';
-                        p1Detail.textContent = 'ミス（🥭-1）';
-                        p2Detail.textContent = 'セーフ';
-                        p1Wins = Math.max(0, p1Wins - 1);
-                    } else {
-                        p2Tapped = true;
-                        p2Avatar.classList.add('dead');
-                        p1Avatar.classList.add('shoot');
-                        p2Status.textContent = '';
-                        p1Status.textContent = '';
-                        p2Detail.textContent = 'ミス（🥭-1）';
-                        p1Detail.textContent = 'セーフ';
-                        p2Wins = Math.max(0, p2Wins - 1);
-                    }
-                    updateScoreIcons();
-                    checkMatchEnd();
-                    return;
-                }
-
-            } else if (gameState === 'READY') {
-                p1Avatar.classList.remove('waiting-anim');
-                p2Avatar.classList.remove('waiting-anim');
-
-                const tapDuration = (performance.now() - startTime) / 1000;
-                playGrabSound();
-                triggerFlash(playerNum);
-
-                const opponentNum = playerNum === 1 ? 2 : 1;
-                triggerHitEffect(opponentNum);
-
-                if (playerNum === 1 && !p1Tapped) {
-                    p1Tapped = true;
-                    p1Time = tapDuration;
-                    p1Avatar.classList.add('shoot');
-                    p1Detail.textContent = `タイム: ${p1Time.toFixed(3)} 秒`;
-                    p1Status.textContent = '';
-                } else if (playerNum === 2 && !p2Tapped) {
-                    p2Tapped = true;
-                    p2Time = tapDuration;
-                    p2Avatar.classList.add('shoot');
-                    p2Detail.textContent = `タイム: ${p2Time.toFixed(3)} 秒`;
-                    p2Status.textContent = '';
-                }
-
-                // 最初のプレイヤーがタップした瞬間の処理
-                if ((p1Tapped && !p2Tapped) || (!p1Tapped && p2Tapped)) {
-                    if (!firstTapTimer) {
-                        const firstPlayer = p1Tapped ? 1 : 2;
-                        // 2 秒間もう片方がタップしなければ、その時点でラウンド決着
-                        firstTapTimer = setTimeout(() => {
-                            if (gameState === 'READY') {
-                                finalizeRoundByTimeout(firstPlayer);
-                            }
-                        }, 2000);
-                    }
-                }
-
-                if (p1Tapped && p2Tapped) {
-                    if (firstTapTimer) {
-                        clearTimeout(firstTapTimer);
-                        firstTapTimer = null;
-                    }
-                    const delayWeight = 600; 
-                    setTimeout(finalizeRound, delayWeight);
-                }
-            }
-        }
-
-        // 片方が2 秒以内にタップしなかった場合の終了処理
-        function finalizeRoundByTimeout(firstPlayer) {
-            if (gameState === 'FINISHED') return;
-            gameState = 'FINISHED';
-
-            p1Avatar.classList.remove('waiting-anim');
-            p2Avatar.classList.remove('waiting-anim');
-
-            if (firstPlayer === 1) {
-                p2Tapped = true;
-                p2Avatar.classList.add('dead');
-                p1Wins++;
-                p1Detail.textContent = `タイム: ${p1Time.toFixed(3)} 秒 (🥭+1)`;
-                p2Detail.textContent = '残念!';
-            } else {
-                p1Tapped = true;
-                p1Avatar.classList.add('dead');
-                p2Wins++;
-                p2Detail.textContent = `タイム: ${p2Time.toFixed(3)} 秒 (🥭+1)`;
-                p1Detail.textContent = '残念!';
-            }
-
-            updateScoreIcons();
-            playVictorySound();
-            checkMatchEnd();
-        }
-
-        function finalizeRound() {
-            if (gameState === 'FINISHED') return;
-            gameState = 'FINISHED';
-
-            if (firstTapTimer) {
-                clearTimeout(firstTapTimer);
-                firstTapTimer = null;
-            }
-
-            p1Avatar.classList.remove('waiting-anim');
-            p2Avatar.classList.remove('waiting-anim');
-
-            if (p1Time < p2Time) {
-                p1Status.textContent = '';
-                p2Status.textContent = '';
-                p2Avatar.classList.add('dead');
-                p1Wins++;
-                p1Detail.textContent = `タイム: ${p1Time.toFixed(3)} 秒 (🥭+1)`;
-                p2Detail.textContent = `タイム: ${p2Time.toFixed(3)} 秒`;
-                updateScoreIcons();
-                playVictorySound();
-            } else if (p2Time < p1Time) {
-                p2Status.textContent = '';
-                p1Status.textContent = '';
-                p1Avatar.classList.add('dead');
-                p2Wins++;
-                p2Detail.textContent = `タイム: ${p2Time.toFixed(3)} 秒 (🥭+1)`;
-                p1Detail.textContent = `タイム: ${p1Time.toFixed(3)} 秒`;
-                updateScoreIcons();
-                playVictorySound();
-            } else {
-                p1Status.textContent = '';
-                p2Status.textContent = '';
-                p1Detail.textContent = `タイム: ${p1Time.toFixed(3)} 秒`;
-                p2Detail.textContent = `タイム: ${p2Time.toFixed(3)} 秒`;
-            }
-
-            checkMatchEnd();
-        }
-
-        function triggerGameOver(winnerNum, messageText, loserNum, orientPlayer = null) {
-            gameState = 'MATCH_OVER';
-            p1Avatar.classList.remove('waiting-anim');
-            p2Avatar.classList.remove('waiting-anim');
-
-            p1Status.textContent = '';
-            p2Status.textContent = '';
-            playSadDefeatSound();
-            
-            const targetOrient = orientPlayer !== null ? orientPlayer : winnerNum;
-            startOverlay.classList.remove('orient-p1', 'orient-p2');
-            startOverlay.classList.add(targetOrient === 2 ? 'orient-p2' : 'orient-p1');
-
-            overlayTitle.textContent = messageText;
-            if (loserNum) {
-                overlaySub.textContent = `マーモット${loserNum}の敗北`;
-            } else {
-                overlaySub.textContent = '';
-            }
-            overlayBtn.textContent = 'もう一度プレイ';
-            
-            setTimeout(() => {
-                startOverlay.classList.remove('hidden');
-            }, 2000);
-        }
-
-        function checkMatchEnd() {
-            if (p1Wins >= 3 || p2Wins >= 3) {
-                gameState = 'MATCH_OVER';
-                p1Avatar.classList.remove('waiting-anim');
-                p2Avatar.classList.remove('waiting-anim');
-
-                p1Status.textContent = 'ネクスト';
-                p2Status.textContent = '';
-                playVictorySound();
-                
-                const winnerNum = p1Wins > p2Wins ? 1 : 2;
-                
-                startOverlay.classList.remove('orient-p1', 'orient-p2');
-                startOverlay.classList.add(winnerNum === 2 ? 'orient-p2' : 'orient-p1');
-
-                overlayTitle.textContent = p1Wins > p2Wins ? 'マーモット1の勝利！' : 'マーモット2の勝利！';
-                overlaySub.textContent = '';
-                overlayBtn.textContent = 'もう一度プレイ';
-                
-                setTimeout(() => {
-                    startOverlay.classList.remove('hidden');
-                }, 2000);
-            } else {
-                p1Ready = false;
-                p2Ready = false;
-                p1Btn.disabled = false;
-                p2Btn.disabled = false;
-                p1Btn.textContent = '次へ';
-                p2Btn.textContent = '次へ';
-                p1Btn.classList.remove('ready-state');
-                p2Btn.classList.remove('ready-state');
-            }
-        }
-
-        function toggleModal() {
-            const modal = document.getElementById('modal');
-            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
-        }
-    </script>
+      }
+    });
+    return {count, pity, forFourRate, breakdown, monthly, luckiest};
+  }, [records, statYear]);
+
+  const rate = (n,d) => d>0 ? ((n/d)*100).toFixed(2) : '0.00';
+
+  return (
+    <div>
+      <div className="section-title">🏆 実績</div>
+      <div className="card" style={{padding:'18px 16px'}}>
+        <select className="input" style={{marginBottom:16,textAlign:'center'}} value={statYear} onChange={e=>setStatYear(e.target.value)}>
+          <option value="all">全期間</option>
+          {availableYears.map(y=><option key={y} value={y}>{y}年</option>)}
+        </select>
+        <div style={{textAlign:'center',marginBottom:18}}>
+          <div style={{fontSize:12,color:'var(--ink-soft)',fontWeight:700,marginBottom:2}}>{statYear==='all'?'累計':statYear+'年'}のガチャ回数</div>
+          <div className="stat-num" style={{fontSize:38,color:'var(--brand-strong)'}}>{stats.count}<span style={{fontSize:16}}>連</span></div>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
+          <StatBox label="★5 PU" color="var(--gold)" bg="var(--gold-bg)" val={stats.breakdown['星5PU']} pct={rate(stats.breakdown['星5PU'], stats.count)} />
+          <StatBox label="★5 (他)" color="var(--silver)" bg="var(--silver-bg)" val={stats.breakdown['星5他']} pct={rate(stats.breakdown['星5他'], stats.count)} />
+          <StatBox label="★4 PU" color="var(--blue)" bg="var(--blue-bg)" val={stats.breakdown['星4PU']} pct={rate(stats.breakdown['星4PU'], stats.forFourRate)} />
+          <StatBox label="特殊" color="var(--purple)" bg="var(--purple-bg)" val={stats.breakdown['特殊']} pct={null} />
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',paddingTop:14,borderTop:'1px solid var(--border)',fontSize:13,fontWeight:700,color:'var(--ink-soft)'}}>
+          <span>天井回数</span><span style={{color:'var(--ink)'}}>{stats.pity}回</span>
+        </div>
+        {stats.luckiest && (
+          <div style={{marginTop:12,background:'var(--gold-bg)',border:'1px solid var(--gold-border)',borderRadius:12,padding:'10px 12px',fontSize:12.5}}>
+            ✨ 最も引きが良かったのは <b>{stats.luckiest.rec.puSaba}</b>（{stats.luckiest.rec.date}）
+          </div>
+        )}
+      </div>
+
+      {statYear!=='all' && Object.keys(stats.monthly).length>0 && (
+        <React.Fragment>
+          <div className="section-title">📅 月別の内訳</div>
+          <div className="card" style={{padding:'14px 16px'}}>
+            {Object.keys(stats.monthly).sort().reverse().map(m => {
+              const d = stats.monthly[m];
+              const w = d.count>0 ? Math.min(100,(d.pu/d.count)*100*8) : 0;
+              return (
+                <div key={m} style={{padding:'9px 0',borderBottom:'1px solid var(--border)'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:12.5,marginBottom:5}}>
+                    <span style={{fontWeight:700}}>{m}</span>
+                    <span style={{color:'var(--ink-soft)'}}>{d.count}連 ・ PU{d.pu}騎</span>
+                  </div>
+                  <div className="mini-bar"><span style={{width:w+'%',background:'linear-gradient(90deg,var(--gold-glow),var(--gold))'}} /></div>
+                </div>
+              );
+            })}
+          </div>
+        </React.Fragment>
+      )}
+    </div>
+  );
+}
+function StatBox({label,color,bg,val,pct}){
+  return (
+    <div style={{background:bg,borderRadius:14,padding:'12px 10px',textAlign:'center'}}>
+      <div style={{fontSize:11,fontWeight:800,color,marginBottom:3}}>{label}</div>
+      <div className="stat-num" style={{fontSize:22,color}}>{val}</div>
+      {pct!==null && <div style={{fontSize:10.5,color,opacity:.75}}>{pct}%</div>}
+    </div>
+  );
+}
+
+/* ================= SIMULATOR (GACHA) TAB ================= */
+const ITEM_A = {id:'a', emoji:'🌏', name:'地球', type:'星5PU'};
+const ITEM_B = {id:'b', emoji:'🌕', name:'金色の丸い月', type:'星5他'};
+const ITEM_C = {id:'c', emoji:'🐓', name:'ヒヨコ', type:'星4PU'};
+const ITEM_D = {id:'d', emoji:'🐣', name:'卵の殻付きのヒヨコ', type:'その他'};
+const ITEM_E = {id:'e', emoji:'🌱', name:'双葉', type:'その他'};
+
+function GachaTab({servants, soundOn, setSoundOn}){
+  const [diamonds, setDiamonds] = useState(() => load('gacha_diamonds', 300));
+  useEffect(()=>save('gacha_diamonds', diamonds), [diamonds]);
+  const [totals, setTotals] = useState(() => load('gacha_sim_totals', {count:0,a:0,b:0,c:0,d:0}));
+  useEffect(()=>save('gacha_sim_totals', totals), [totals]);
+
+  const [phase, setPhase] = useState('idle'); // idle | box | reveal | results
+  const [step, setStep] = useState(0);
+  const [giftEmoji, setGiftEmoji] = useState('🍄‍🟫');
+  const [wobbling, setWobbling] = useState(false);
+  const [ringTier, setRingTier] = useState(null); // null|gold|blue
+  const [flash, setFlash] = useState(null);
+  const [current, setCurrent] = useState(null); // {item, art}
+  const [results, setResults] = useState([]);
+  const skipRef = useRef(false);
+  const [previewFor, setPreviewFor] = useState(null);
+
+  const fiveStarPU = useMemo(()=>servants.filter(s=>s.rarity===5 && s.active), [servants]);
+  const fourStarPU = useMemo(()=>servants.filter(s=>s.rarity===4 && s.active), [servants]);
+
+  const pickArt = (item) => {
+    const pool = item.id==='a' ? fiveStarPU : item.id==='c' ? fourStarPU : [];
+    if (pool.length===0) return null;
+    return pool[Math.floor(Math.random()*pool.length)];
+  };
+
+  const wait = async (ms) => {
+    if (reducedMotion()) return;
+    let elapsed=0;
+    while(elapsed<ms){ if (skipRef.current) return; await new Promise(r=>setTimeout(r,40)); elapsed+=40; }
+  };
+
+  const rollOne = () => {
+    const r = Math.random()*100;
+    if (r<0.8) return ITEM_A;
+    if (r<1.0) return ITEM_B;
+    if (r<3.1) return ITEM_C;
+    if (r<4.0) return ITEM_D;
+    return ITEM_E;
+  };
+
+  const run11 = async () => {
+    if (diamonds < 30){ alert('💎が足りません！'); return; }
+    setDiamonds(d=>d-30);
+    setResults([]); setPhase('box'); skipRef.current = false;
+    const draws = Array.from({length:11}, () => {
+      const item = rollOne();
+      const art = pickArt(item);
+      return {item, art};
+    });
+
+    for (let i=0;i<11;i++){
+      if (skipRef.current){
+        setResults(prev => [...prev, ...draws.slice(i).map(d=>d)]);
+        break;
+      }
+      const {item, art} = draws[i];
+      const tier5 = item.id==='a'||item.id==='b';
+      const tier4 = item.id==='c'||item.id==='d';
+      setStep(i+1); setCurrent(null); setRingTier(null); setFlash(null);
+      setGiftEmoji('🍄‍🟫'); setWobbling(false);
+
+      if (tier5){
+        const roll = Math.random();
+        setGiftEmoji(roll<0.6 ? '🌑' : '🍆');
+        await wait(250); if (skipRef.current){ setResults(prev=>[...prev,{item,art}]); continue; }
+        setWobbling(true); setRingTier('gold');
+        await wait(650); if (skipRef.current){ setWobbling(false); setRingTier(null); setResults(prev=>[...prev,{item,art}]); continue; }
+        setFlash('gold'); playChime('gold', soundOn);
+        await wait(600); if (skipRef.current){ setWobbling(false); setRingTier(null); setFlash(null); setResults(prev=>[...prev,{item,art}]); continue; }
+      } else if (tier4){
+        setGiftEmoji('🍆');
+        await wait(230); if (skipRef.current){ setResults(prev=>[...prev,{item,art}]); continue; }
+        setWobbling(true); setRingTier('blue');
+        await wait(500); if (skipRef.current){ setWobbling(false); setRingTier(null); setResults(prev=>[...prev,{item,art}]); continue; }
+        playChime('blue', soundOn);
+        await wait(300);
+      } else {
+        setWobbling(true);
+        await wait(400);
+      }
+      setWobbling(false); setRingTier(null); setFlash(null);
+      if (skipRef.current){ setResults(prev=>[...prev,{item,art}]); continue; }
+      setPhase('reveal'); setCurrent({item, art});
+      if (!tier5 && !tier4) playChime('plain', soundOn);
+      setResults(prev=>[...prev,{item,art}]);
+      await wait(tier5?750:tier4?550:380);
+      setPhase('box');
+    }
+    setWobbling(false); setRingTier(null); setFlash(null); setCurrent(null);
+    setPhase('results');
+    setTotals(t => {
+      const nt = {...t, count:t.count+11};
+      draws.forEach(({item}) => {
+        if (item.id==='a') nt.a++; if (item.id==='b') nt.b++;
+        if (item.id==='c') nt.c++; if (item.id==='d') nt.d++;
+      });
+      return nt;
+    });
+  };
+
+  const resetTotals = () => { if(confirm('シミュレーターの集計をリセットしますか？')) setTotals({count:0,a:0,b:0,c:0,d:0}); };
+
+  return (
+    <div>
+      <div className="section-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <span>✨ ガチャシミュレーター</span>
+        <button className="header-btn" style={{background:'var(--surface-alt)',border:'1px solid var(--border)',color:'var(--ink-soft)'}} onClick={()=>setSoundOn(v=>!v)}>{soundOn?'🔊 音あり':'🔈 音なし'}</button>
+      </div>
+
+      <div className="card" style={{padding:14,marginBottom:14,display:'flex',alignItems:'center',gap:10}}>
+        <span style={{fontSize:13,fontWeight:800,color:'var(--ink-soft)'}}>💎 所持数</span>
+        <input type="number" className="input" style={{width:100,padding:'7px 10px'}} value={diamonds} onChange={e=>setDiamonds(parseInt(e.target.value)||0)} />
+        <span style={{fontSize:11.5,color:'var(--ink-faint)'}}>個（11連=30個）</span>
+      </div>
+
+      <div className="stage">
+        <div className={"stage-flash "+(flash?flash+" on":"")} />
+        {ringTier && <div className={"stage-ring ring-"+ringTier} />}
+        <div className="stage-step">{phase==='box'||phase==='reveal' ? `${step} / 11 回目` : phase==='results' ? '結果' : '準備OK'}</div>
+        <div className="stage-main">
+          {(phase==='box') && (
+            <div className={"gift-emoji "+(wobbling?"wobbling":"")}>{giftEmoji}</div>
+          )}
+          {phase==='reveal' && current && (
+            current.art ? (
+              <div className={"reveal-art-wrap pop-in "+(current.item.id==='a'?'gold':current.item.id==='c'?'blue':'')} style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
+                <img className="reveal-art" src={current.art.img} />
+              </div>
+            ) : <div className="reveal-emoji pop-in">{current.item.emoji}</div>
+          )}
+          {phase==='idle' && <div style={{fontSize:52,opacity:.4}}>🎴</div>}
+          {phase==='results' && (
+            <div className="stage-results">
+              {results.map((r,i)=>(
+                <div key={i} className={"res-slot "+(r.item.id==='a'?'gold':r.item.id==='c'?'blue':'')} style={{animationDelay:(i*0.06)+'s'}}>
+                  {r.art ? <img src={r.art.img} /> : r.item.emoji}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        {phase==='reveal' && current && (
+          <div className="reveal-name">
+            {current.art ? current.art.name : current.item.name}
+            <div><Tag type={current.item.type} /></div>
+          </div>
+        )}
+      </div>
+
+      <div style={{textAlign:'center',marginTop:16}}>
+        <button className="btn btn-gold" disabled={phase==='box'||phase==='reveal'} onClick={run11}>11連ガチャを回す</button>
+        {(phase==='box'||phase==='reveal') && (
+          <div style={{marginTop:10}}>
+            <button className="btn btn-ghost btn-sm" onClick={()=>{skipRef.current=true;}}>⏩ スキップ</button>
+          </div>
+        )}
+      </div>
+
+      <div className="section-title">📊 シミュレーター集計</div>
+      <div className="card" style={{padding:'14px 12px'}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:6,textAlign:'center'}}>
+          <div><div style={{fontSize:10,color:'var(--ink-faint)',fontWeight:700}}>合計</div><div className="stat-num" style={{fontSize:16}}>{totals.count}連</div></div>
+          <div><div style={{fontSize:10,color:'var(--gold)',fontWeight:700}}>★5PU</div><div className="stat-num" style={{fontSize:16,color:'var(--gold)'}}>{totals.a}</div><div style={{fontSize:9.5,color:'var(--ink-faint)'}}>{totals.count>0?((totals.a/totals.count)*100).toFixed(2):'0.00'}%</div></div>
+          <div><div style={{fontSize:10,color:'var(--silver)',fontWeight:700}}>★5他</div><div className="stat-num" style={{fontSize:16,color:'var(--silver)'}}>{totals.b}</div><div style={{fontSize:9.5,color:'var(--ink-faint)'}}>{totals.count>0?((totals.b/totals.count)*100).toFixed(2):'0.00'}%</div></div>
+          <div><div style={{fontSize:10,color:'var(--blue)',fontWeight:700}}>★4PU</div><div className="stat-num" style={{fontSize:16,color:'var(--blue)'}}>{totals.c}</div><div style={{fontSize:9.5,color:'var(--ink-faint)'}}>{totals.count>0?((totals.c/totals.count)*100).toFixed(2):'0.00'}%</div></div>
+          <div><div style={{fontSize:10,color:'var(--ink-soft)',fontWeight:700}}>★4他</div><div className="stat-num" style={{fontSize:16}}>{totals.d}</div><div style={{fontSize:9.5,color:'var(--ink-faint)'}}>{totals.count>0?((totals.d/totals.count)*100).toFixed(2):'0.00'}%</div></div>
+        </div>
+        <div style={{textAlign:'center',marginTop:12}}>
+          <button className="btn btn-ghost btn-sm" onClick={resetTotals}>🔄 集計をリセット</button>
+        </div>
+      </div>
+      {(fiveStarPU.length>0 || fourStarPU.length>0) && (
+        <div style={{fontSize:11.5,color:'var(--ink-faint)',textAlign:'center',marginTop:10}}>
+          🖼️ 図鑑で「今回のPU」に設定したサーヴァントが、PU枠が出たときに登場します
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================= GALLERY TAB ================= */
+function GalleryTab({servants, setServants}){
+  const [editing, setEditing] = useState(null); // servant obj or 'new'
+  const [previewFor, setPreviewFor] = useState(null);
+
+  const openNew = () => setEditing({ id:null, name:'', rarity:5, img:null, active:false });
+
+  const handleDelete = (id) => {
+    if (confirm('このサーヴァントを図鑑から削除しますか？')) setServants(s=>s.filter(x=>x.id!==id));
+  };
+
+  return (
+    <div>
+      <div className="section-title">🖼️ サーヴァント図鑑</div>
+      <div style={{fontSize:12.5,color:'var(--ink-soft)',marginBottom:12}}>
+        欲しいサーヴァントの画像を登録しておくと、ガチャシミュレーターのPU枠で登場したり、いつでも演出を見返せます。
+      </div>
+      <div className="gal-grid">
+        {servants.map(sv => (
+          <div key={sv.id} className="gal-card" onClick={()=>setPreviewFor(sv)}>
+            <span className={"badge "+(sv.rarity===5?"tag-gold":"tag-blue")}>★{sv.rarity}</span>
+            {sv.active && <span className="active-dot" title="今回のPU" />}
+            {sv.img ? <img src={sv.img} /> : <div className="noimg">👤</div>}
+            <div className="gname">{sv.name||'(無題)'}</div>
+          </div>
+        ))}
+        <button className="gal-add" onClick={openNew}>
+          <span style={{fontSize:22}}>＋</span>
+          <span>追加</span>
+        </button>
+      </div>
+
+      {servants.length===0 && (
+        <div className="card empty" style={{marginTop:14}}>
+          <div className="ic">🎴</div>
+          <div className="t">図鑑はまだ空です</div>
+          <div className="d">「＋追加」から欲しいサーヴァントの画像を登録しましょう</div>
+        </div>
+      )}
+
+      {editing && (
+        <ServantEditor
+          servant={editing}
+          onCancel={()=>setEditing(null)}
+          onSave={(sv)=>{
+            setServants(list => sv.id ? list.map(x=>x.id===sv.id?sv:x) : [...list, {...sv, id:uid()}]);
+            setEditing(null);
+          }}
+          onEditExisting={()=>{}}
+        />
+      )}
+      {editing===null && null}
+
+      {previewFor && (
+        <RevealPreviewModal servant={previewFor}
+          onEdit={()=>{ setEditing(previewFor); setPreviewFor(null); }}
+          onDelete={()=>{ handleDelete(previewFor.id); setPreviewFor(null); }}
+          onToggleActive={()=>{
+            setServants(list=>list.map(x=>x.id===previewFor.id?{...x,active:!x.active}:x));
+            setPreviewFor(p=>({...p, active:!p.active}));
+          }}
+          onClose={()=>setPreviewFor(null)} />
+      )}
+    </div>
+  );
+}
+
+function ServantEditor({servant, onSave, onCancel}){
+  const [name, setName] = useState(servant.name);
+  const [rarity, setRarity] = useState(servant.rarity);
+  const [img, setImg] = useState(servant.img);
+  const [active, setActive] = useState(!!servant.active);
+  const [busy, setBusy] = useState(false);
+
+  const onFile = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    setBusy(true);
+    try{ setImg(await resizeImage(f)); } catch(err){ alert('画像の読み込みに失敗しました'); }
+    setBusy(false);
+  };
+
+  const submit = () => {
+    if (!name.trim()){ alert('名前を入力してください'); return; }
+    onSave({ id: servant.id, name, rarity, img, active });
+  };
+
+  return (
+    <Modal title={servant.id ? 'サーヴァントを編集' : 'サーヴァントを追加'} onClose={onCancel}>
+      <div style={{display:'flex',flexDirection:'column',gap:12}}>
+        <div style={{display:'flex',justifyContent:'center'}}>
+          <label style={{width:120,height:120,borderRadius:20,background:'var(--surface-alt)',border:'2px dashed var(--border)',display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',cursor:'pointer'}}>
+            {img ? <img src={img} style={{width:'100%',height:'100%',objectFit:'cover'}} /> : <span style={{fontSize:12,color:'var(--ink-faint)',textAlign:'center'}}>{busy?'読込中…':'画像を選択'}</span>}
+            <input type="file" accept="image/*" style={{display:'none'}} onChange={onFile} />
+          </label>
+        </div>
+        <div>
+          <label className="field-label">サーヴァント名</label>
+          <input className="input" value={name} onChange={e=>setName(e.target.value)} placeholder="例）オベロン" />
+        </div>
+        <div>
+          <label className="field-label">レアリティ</label>
+          <div className="tabbar">
+            <button type="button" className={rarity===5?'on':''} onClick={()=>setRarity(5)}>★5</button>
+            <button type="button" className={rarity===4?'on':''} onClick={()=>setRarity(4)}>★4</button>
+          </div>
+        </div>
+        <label style={{display:'flex',alignItems:'center',gap:8,background:'var(--surface-alt)',border:'1px solid var(--border)',borderRadius:12,padding:'10px 12px',cursor:'pointer'}}>
+          <input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)} style={{width:18,height:18}} />
+          <span style={{fontSize:12.5,fontWeight:700,color:'var(--ink-soft)'}}>今回のPUに設定する（シミュレーターで登場）</span>
+        </label>
+        <button className="btn btn-primary btn-block" onClick={submit}>保存する</button>
+      </div>
+    </Modal>
+  );
+}
+
+function RevealPreviewModal({servant, onClose, onEdit, onDelete, onToggleActive}){
+  const [phase, setPhase] = useState('box');
+  const [flash, setFlash] = useState(null);
+  const tier = servant.rarity===5 ? 'gold' : 'blue';
+
+  useEffect(() => {
+    let alive = true;
+    setPhase('box'); setFlash(null);
+    (async () => {
+      await new Promise(r=>setTimeout(r, reducedMotion()?10:700));
+      if (!alive) return;
+      setFlash(tier);
+      await new Promise(r=>setTimeout(r, reducedMotion()?10:350));
+      if (!alive) return;
+      setPhase('reveal');
+    })();
+    return () => { alive = false; };
+  }, [servant.id]);
+
+  const replay = () => { setPhase('box'); setFlash(null);
+    setTimeout(()=>{ setFlash(tier); setTimeout(()=>setPhase('reveal'), 350); }, 700);
+  };
+
+  return (
+    <Modal title={servant.name} onClose={onClose}>
+      <div className="stage" style={{minHeight:220}}>
+        <div className={"stage-flash "+(flash?flash+" on":"")} />
+        {phase==='box' && <div className={"stage-ring ring-"+tier} />}
+        <div className="stage-main">
+          {phase==='box' && <div className="gift-emoji wobbling">{tier==='gold'?'🌑':'🍆'}</div>}
+          {phase==='reveal' && (
+            <div className={"reveal-art-wrap pop-in "+tier}>
+              {servant.img ? <img className="reveal-art" src={servant.img} /> : <div className="reveal-emoji">👤</div>}
+            </div>
+          )}
+        </div>
+        {phase==='reveal' && (
+          <div className="reveal-name">{servant.name}<div><Tag type={servant.rarity===5?'星5PU':'星4PU'} /></div></div>
+        )}
+      </div>
+      <div style={{display:'flex',gap:8,marginTop:14,flexWrap:'wrap'}}>
+        <button className="btn btn-gold btn-sm" onClick={replay}>🔁 もう一度見る</button>
+        <button className="btn btn-ghost btn-sm" onClick={onToggleActive}>{servant.active?'✅ 今回のPU中':'☆ 今回のPUにする'}</button>
+        <button className="btn btn-ghost btn-sm" onClick={onEdit}>編集</button>
+        <button className="btn btn-danger btn-sm" onClick={onDelete}>削除</button>
+      </div>
+    </Modal>
+  );
+}
+
+/* ================= APP ================= */
+function App(){
+  const [tab, setTab] = useState('record');
+  const [records, setRecordsState] = useState(() => load('gacha_records', []));
+  const [servants, setServantsState] = useState(() => load('gacha_servants', []));
+  const [soundOn, setSoundOn] = useState(() => load('gacha_sound', true));
+
+  const setRecords = useCallback((updater) => {
+    setRecordsState(prev => { const next = typeof updater==='function'?updater(prev):updater; save('gacha_records', next); return next; });
+  }, []);
+  const setServants = useCallback((updater) => {
+    setServantsState(prev => { const next = typeof updater==='function'?updater(prev):updater; save('gacha_servants', next); return next; });
+  }, []);
+  useEffect(()=>save('gacha_sound', soundOn), [soundOn]);
+
+  const TABS = [
+    {key:'record', label:'記録', icon:'📖'},
+    {key:'stats', label:'実績', icon:'🏆'},
+    {key:'gacha', label:'ガチャ', icon:'✨'},
+    {key:'gallery', label:'図鑑', icon:'🖼️'},
+  ];
+
+  return (
+    <React.Fragment>
+      <header className="app-header">
+        <div className="app-header-row">
+          <div className="app-title"><span className="mark"></span>FGOガチャ記録</div>
+        </div>
+        <div className="app-sub">きょうの召喚も、まるごと記録に</div>
+      </header>
+      <main>
+        {tab==='record' && <RecordsTab records={records} setRecords={setRecords} servants={servants} />}
+        {tab==='stats' && <StatsTab records={records} />}
+        {tab==='gacha' && <GachaTab servants={servants} soundOn={soundOn} setSoundOn={setSoundOn} />}
+        {tab==='gallery' && <GalleryTab servants={servants} setServants={setServants} />}
+      </main>
+      <nav className="bottom-nav">
+        {TABS.map(t => (
+          <button key={t.key} className={"nav-btn "+(tab===t.key?'on':'')} onClick={()=>setTab(t.key)}>
+            <span className="ic">{t.icon}</span>
+            <span className="lb">{t.label}</span>
+          </button>
+        ))}
+      </nav>
+    </React.Fragment>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
 </body>
 </html>
